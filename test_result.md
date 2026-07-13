@@ -101,3 +101,92 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  BabyFace AI — apply user's branding across the app:
+    1. Put the provided icon in the in-app splash screen.
+    2. Replace the "babyface ai" text on the login/signup page with the provided wordmark image (transparent bg).
+    3. Apply Instrument Serif as the global font family.
+    4. Give every button in the app an Apple-style 3D "liquid glass" effect.
+
+frontend:
+  - task: "Splash screen — use provided logo icon"
+    implemented: true
+    working: true
+    file: "frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Replaced MaterialCommunityIcons baby-face with <Image source={require('@/assets/images/logo-icon.png')} /> 180×180 rounded. Also copied the icon to icon.png, adaptive-icon.png and native splash-image.png; updated app.json backgroundColor to #ffffff and Android adaptive background to brand purple #987ad6. Verified via screenshot."
+
+  - task: "Login screen — replace babyface ai text with wordmark image"
+    implemented: true
+    working: true
+    file: "frontend/app/login.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Downloaded the wordmark asset, converted to transparent-bg PNG (Pillow near-white stripping), cropped to bbox, saved as assets/images/logo-wordmark.png (1200×236). Login screen renders it via <Image resizeMode='contain' /> at 260×60. Verified via screenshot."
+
+  - task: "Global font family: Instrument Serif"
+    implemented: true
+    working: true
+    file: "frontend/app/_layout.tsx, frontend/src/hooks/use-app-fonts.ts, frontend/src/lib/patch-default-font.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Installed @expo-google-fonts/instrument-serif via yarn expo install. Created useAppFonts() that merges the existing icon-fonts map with InstrumentSerif_400Regular + Italic. Patched Text.render and TextInput.render at module-load to prepend { fontFamily: 'InstrumentSerif_400Regular' } to any style, so every string in the app renders in Instrument Serif without touching each screen. Local fontFamily overrides still win. Verified visually across splash, login, onboarding, home, profile, buy-credits sheet."
+
+  - task: "Apple 3D liquid-glass effect for all buttons"
+    implemented: true
+    working: true
+    file: "frontend/src/components/LiquidGlassButton.tsx + every screen"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Built LiquidGlassButton and LiquidGlassIconButton composing BlurView + vertical LinearGradient body + top specular gloss + rim border + shadow + press-in scale spring. Variants: primary/light/dark/blue/pink/success/error/ghost. Refactored ALL pressables across: login (Google + Apple), onboarding (chips + Continuer + done Continuer), edit-profile (back, change photo, save), generate (back, next, photo options, retake, continuer, generer, reveal, retry, cancel, permission-sheet buttons), home (credits badge, Commencer, buy credits, close sheet), profile (pencil badge, Modifier, edit-profile-button), result cards (share, close, exit), generation detail (retour). Tab bar and progress dots intentionally kept native for navigation clarity. Verified via mobile screenshots showing gradient body + gloss on primary, dark gloss on Apple, light glass on Google & chips."
+
+backend:
+  - task: "Backend continues to run (no changes in this task)"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Recreated missing backend/.env (MONGO_URL, DB_NAME=babyface_ai, EMERGENT_LLM_KEY, FREE_CREDITS=3) and frontend/.env (EXPO_PUBLIC_BACKEND_URL + packager vars) that were absent on cold start. Restarted supervisor. GET /api/ returns {message: 'BabyFace AI API', status: 'ok'}."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.1"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Splash screen — use provided logo icon"
+    - "Login screen — replace babyface ai text with wordmark image"
+    - "Global font family: Instrument Serif"
+    - "Apple 3D liquid-glass effect for all buttons"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+      message: "Frontend branding pass complete: user-supplied logo on splash + wordmark on login + Instrument Serif applied globally via render patch + liquid-glass buttons on every CTA/chip/icon-button across the app. Verified visually. Backend untouched aside from restoring the .env files that were missing on cold start."

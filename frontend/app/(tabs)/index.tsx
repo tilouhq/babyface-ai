@@ -6,8 +6,9 @@ import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { LiquidGlassButton } from "@/src/components/LiquidGlassButton";
 import { useApp } from "@/src/context/AppContext";
-import { colors, genderColor, genderSoft, radius, shadow, spacing } from "@/src/theme";
+import { colors, genderColor, genderSoft, radius, spacing } from "@/src/theme";
 
 export default function BabyFaceHome() {
   const router = useRouter();
@@ -38,14 +39,17 @@ export default function BabyFaceHome() {
     <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
       <View style={styles.header}>
         <Text style={styles.logoText}>babyface ai</Text>
-        <Pressable
+        <LiquidGlassButton
           testID="credits-badge"
+          variant="light"
+          height={38}
+          borderRadius={radius.pill}
           onPress={() => credits <= 0 && setShowBuySheet(true)}
-          style={styles.creditsBadge}
+          contentStyle={styles.creditsContent}
         >
           <Ionicons name="sparkles" size={16} color={colors.brand} />
           <Text style={styles.creditsText}>{credits}</Text>
-        </Pressable>
+        </LiquidGlassButton>
       </View>
 
       <View style={styles.center}>
@@ -61,17 +65,19 @@ export default function BabyFaceHome() {
               {gender === "boy" ? "Garçon" : "Fille"}
             </Text>
           </View>
-          <Text style={styles.hint}>Touche à nouveau l'onglet BabyFace AI pour changer le genre</Text>
+          <Text style={styles.hint}>Touche à nouveau l’onglet BabyFace AI pour changer le genre</Text>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(500)} style={styles.startWrap}>
-          <Pressable
+          <LiquidGlassButton
             testID="start-generation-button"
+            variant="primary"
+            height={64}
+            width={280}
             onPress={onStart}
-            style={({ pressed }) => [styles.startButton, pressed && styles.pressed]}
           >
             <Text style={styles.startButtonText}>Commencer</Text>
-          </Pressable>
+          </LiquidGlassButton>
         </Animated.View>
       </View>
 
@@ -85,26 +91,28 @@ export default function BabyFaceHome() {
               </View>
               <Text style={styles.sheetTitle}>Plus de crédits</Text>
               <Text style={styles.sheetText}>
-                Tu as utilisé tous tes crédits gratuits. Achète-en d'autres pour continuer à générer des bébés.
+                Tu as utilisé tous tes crédits gratuits. Achète-en d’autres pour continuer à générer des bébés.
               </Text>
-              {/* Point d'accroche pour le futur système d'achat de crédits (prix à définir) */}
-              <Pressable
+              <LiquidGlassButton
                 testID="buy-credits-button"
+                variant="primary"
+                fullWidth
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   showToast("Les achats de crédits arrivent bientôt");
                 }}
-                style={({ pressed }) => [styles.buyButton, pressed && styles.pressed]}
               >
                 <Text style={styles.buyButtonText}>Acheter des crédits</Text>
-              </Pressable>
-              <Pressable
+              </LiquidGlassButton>
+              <LiquidGlassButton
                 testID="close-buy-sheet-button"
+                variant="ghost"
+                fullWidth
+                height={48}
                 onPress={() => setShowBuySheet(false)}
-                style={({ pressed }) => [styles.closeSheetButton, pressed && styles.pressed]}
               >
                 <Text style={styles.closeSheetText}>Fermer</Text>
-              </Pressable>
+              </LiquidGlassButton>
             </Pressable>
           </Animated.View>
         </Pressable>
@@ -126,22 +134,17 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   logoText: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: "800",
     color: colors.brand,
     letterSpacing: -0.5,
   },
-  creditsBadge: {
-    flexDirection: "row",
-    alignItems: "center",
+  creditsContent: {
     gap: spacing.xs,
-    backgroundColor: colors.brandSoft,
-    borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    height: 36,
   },
   creditsText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
     color: colors.brand,
   },
@@ -164,7 +167,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "800",
     color: colors.onSurface,
     textAlign: "center",
@@ -184,37 +187,23 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   genderChipText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
   },
   hint: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.muted,
     textAlign: "center",
-    maxWidth: 260,
+    maxWidth: 280,
   },
   startWrap: {
     width: "100%",
     alignItems: "center",
   },
-  startButton: {
-    width: "80%",
-    maxWidth: 320,
-    height: 60,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadow.card,
-  },
   startButtonText: {
     color: colors.onBrand,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "800",
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
   sheetBackdrop: {
     flex: 1,
@@ -230,6 +219,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     alignItems: "center",
+    gap: spacing.md,
   },
   sheetHandle: {
     width: 44,
@@ -248,41 +238,25 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sheetTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
     color: colors.onSurface,
   },
   sheetText: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.onSurfaceTertiary,
     textAlign: "center",
-    lineHeight: 21,
+    lineHeight: 22,
     marginTop: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  buyButton: {
-    width: "100%",
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadow.soft,
+    marginBottom: spacing.md,
   },
   buyButtonText: {
     color: colors.onBrand,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
   },
-  closeSheetButton: {
-    marginTop: spacing.md,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
   closeSheetText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: colors.onSurfaceTertiary,
   },

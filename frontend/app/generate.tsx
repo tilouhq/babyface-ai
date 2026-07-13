@@ -22,9 +22,13 @@ import Animated, { FadeIn, FadeOut, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import ResultCards from "@/src/components/ResultCards";
+import {
+  LiquidGlassButton,
+  LiquidGlassIconButton,
+} from "@/src/components/LiquidGlassButton";
 import { useApp } from "@/src/context/AppContext";
 import { api, ApiError, Generation, dataUri } from "@/src/lib/api";
-import { colors, genderColor, radius, shadow, spacing } from "@/src/theme";
+import { colors, radius, spacing } from "@/src/theme";
 
 type Step =
   | "man-info"
@@ -93,7 +97,6 @@ export default function Generate() {
         });
         await refreshUser();
         setResult(gen);
-        // Transition subtile en fondu vers l'écran "révéler"
         setStep("reveal");
       } catch (e) {
         startedRef.current = false;
@@ -195,6 +198,7 @@ export default function Generate() {
     step === "man-info" ? 0 : step === "man-photo" ? 1 : step === "woman-info" ? 2 : 3;
   const showHeader = ["man-info", "man-photo", "woman-info", "woman-photo"].includes(step);
   const accent = isMan ? colors.blue : colors.pink;
+  const primaryVariant: "blue" | "pink" = isMan ? "blue" : "pink";
 
   // ------- Écrans plein écran (generating / reveal / cards / error) -------
 
@@ -229,16 +233,18 @@ export default function Generate() {
         <Animated.View entering={ZoomIn.delay(150).springify()} style={styles.revealCheck}>
           <Ionicons name="checkmark" size={52} color={colors.surface} />
         </Animated.View>
-        <Pressable
+        <LiquidGlassButton
           testID="reveal-results-button"
+          variant="primary"
+          height={58}
+          style={styles.revealButtonWrap}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setStep("cards");
           }}
-          style={({ pressed }) => [styles.revealButton, pressed && styles.pressed]}
         >
           <Text style={styles.revealButtonText}>Révéler les résultats</Text>
-        </Pressable>
+        </LiquidGlassButton>
       </Animated.View>
     );
   }
@@ -278,20 +284,23 @@ export default function Generate() {
         </View>
         <Text style={styles.loadingTitle}>Oups, la génération a échoué</Text>
         <Text style={styles.loadingMsg}>Réessaie dans quelques instants</Text>
-        <Pressable
+        <LiquidGlassButton
           testID="retry-generation-button"
+          variant="primary"
+          height={56}
+          style={styles.revealButtonWrap}
           onPress={() => setStep("generating")}
-          style={({ pressed }) => [styles.revealButton, pressed && styles.pressed]}
         >
           <Text style={styles.revealButtonText}>Réessayer</Text>
-        </Pressable>
-        <Pressable
+        </LiquidGlassButton>
+        <LiquidGlassButton
           testID="cancel-generation-button"
+          variant="ghost"
+          height={48}
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}
         >
           <Text style={styles.ghostButtonText}>Fermer</Text>
-        </Pressable>
+        </LiquidGlassButton>
       </View>
     );
   }
@@ -302,15 +311,20 @@ export default function Generate() {
     <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
       {showHeader && (
         <View style={styles.header}>
-          <Pressable testID="generate-back-button" onPress={goBack} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={26} color={colors.onSurface} />
-          </Pressable>
+          <LiquidGlassIconButton
+            testID="generate-back-button"
+            onPress={goBack}
+            variant="ghost"
+            size={44}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
+          </LiquidGlassIconButton>
           <View style={styles.progressRow}>
             {[0, 1, 2, 3].map((i) => (
               <View key={i} style={[styles.progressDot, i <= stepIndex && { backgroundColor: accent }]} />
             ))}
           </View>
-          <View style={styles.backButton} />
+          <View style={styles.headerSpacer} />
         </View>
       )}
 
@@ -364,13 +378,14 @@ export default function Generate() {
 
           <KeyboardStickyView offset={{ closed: 0, opened: spacing.lg }}>
             <View style={[styles.ctaWrap, { paddingBottom: insets.bottom + spacing.lg }]}>
-              <Pressable
+              <LiquidGlassButton
                 testID="generate-next-button"
+                variant={primaryVariant}
+                fullWidth
                 onPress={goNextFromInfo}
-                style={({ pressed }) => [styles.primaryButton, { backgroundColor: accent }, pressed && styles.pressed]}
               >
                 <Text style={styles.primaryButtonText}>Continuer</Text>
-              </Pressable>
+              </LiquidGlassButton>
             </View>
           </KeyboardStickyView>
         </>
@@ -389,53 +404,62 @@ export default function Generate() {
           {currentPhoto ? (
             <View style={styles.previewWrap}>
               <Image source={{ uri: dataUri(currentPhoto) }} style={styles.preview} contentFit="cover" />
-              <Pressable
+              <LiquidGlassButton
                 testID="retake-photo-button"
+                variant="ghost"
+                height={48}
                 onPress={() => setCurrentPhoto(null)}
-                style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}
               >
                 <Text style={styles.ghostButtonText}>Reprendre</Text>
-              </Pressable>
+              </LiquidGlassButton>
             </View>
           ) : (
             <View style={styles.photoOptions}>
-              <Pressable
+              <LiquidGlassButton
                 testID="take-photo-button"
+                variant="light"
+                height={78}
+                fullWidth
+                borderRadius={radius.md}
                 onPress={takePhoto}
-                style={({ pressed }) => [styles.photoOption, pressed && styles.pressed]}
+                contentStyle={styles.photoOptionContent}
               >
                 <View style={[styles.photoOptionIcon, { backgroundColor: isMan ? colors.blueSoft : colors.pinkSoft }]}>
-                  <Ionicons name="camera" size={30} color={accent} />
+                  <Ionicons name="camera" size={28} color={accent} />
                 </View>
                 <Text style={styles.photoOptionText}>Prendre une photo</Text>
-              </Pressable>
-              <Pressable
+              </LiquidGlassButton>
+              <LiquidGlassButton
                 testID="upload-photo-button"
+                variant="light"
+                height={78}
+                fullWidth
+                borderRadius={radius.md}
                 onPress={uploadPhoto}
-                style={({ pressed }) => [styles.photoOption, pressed && styles.pressed]}
+                contentStyle={styles.photoOptionContent}
               >
                 <View style={[styles.photoOptionIcon, { backgroundColor: colors.brandSoft }]}>
-                  <Ionicons name="images" size={30} color={colors.brand} />
+                  <Ionicons name="images" size={28} color={colors.brand} />
                 </View>
                 <Text style={styles.photoOptionText}>Importer une photo</Text>
-              </Pressable>
+              </LiquidGlassButton>
             </View>
           )}
 
           <View style={styles.flexSpacer} />
 
           {currentPhoto && (
-            <Pressable
+            <LiquidGlassButton
               testID="photo-continue-button"
+              variant={primaryVariant}
               onPress={goNextFromPhoto}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                { backgroundColor: accent, marginHorizontal: spacing.xl },
-                pressed && styles.pressed,
-              ]}
+              fullWidth
+              style={{ marginHorizontal: spacing.xl }}
             >
-              <Text style={styles.primaryButtonText}>{isMan ? "Continuer" : "Générer le bébé"}</Text>
-            </Pressable>
+              <Text style={styles.primaryButtonText}>
+                {isMan ? "Continuer" : "Générer le bébé"}
+              </Text>
+            </LiquidGlassButton>
           )}
         </Animated.View>
       )}
@@ -452,26 +476,28 @@ export default function Generate() {
             <Ionicons name="camera-outline" size={40} color={colors.brand} />
             <Text style={styles.sheetTitle}>Accès à la caméra</Text>
             <Text style={styles.sheetText}>
-              L'accès à la caméra a été refusé. Autorise-le dans les réglages pour prendre une photo,
+              L’accès à la caméra a été refusé. Autorise-le dans les réglages pour prendre une photo,
               ou importe une photo depuis ta galerie.
             </Text>
-            <Pressable
+            <LiquidGlassButton
               testID="open-settings-button"
+              variant="primary"
+              fullWidth
               onPress={() => {
                 setShowPermissionSheet(false);
                 Linking.openSettings();
               }}
-              style={({ pressed }) => [styles.primaryButton, styles.sheetButton, pressed && styles.pressed]}
             >
               <Text style={styles.primaryButtonText}>Ouvrir les réglages</Text>
-            </Pressable>
-            <Pressable
+            </LiquidGlassButton>
+            <LiquidGlassButton
               testID="permission-cancel-button"
+              variant="ghost"
+              height={48}
               onPress={() => setShowPermissionSheet(false)}
-              style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}
             >
               <Text style={styles.ghostButtonText}>Annuler</Text>
-            </Pressable>
+            </LiquidGlassButton>
           </View>
         </Pressable>
       </Modal>
@@ -496,11 +522,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: spacing.md,
   },
-  backButton: {
+  headerSpacer: {
     width: 44,
     height: 44,
-    alignItems: "center",
-    justifyContent: "center",
   },
   progressRow: {
     flexDirection: "row",
@@ -526,39 +550,38 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   title: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: -0.5,
     paddingHorizontal: 0,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 17,
     color: colors.onSurfaceTertiary,
     marginTop: spacing.xs,
     marginBottom: spacing.xl,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
     color: colors.onSurfaceSecondary,
     marginBottom: spacing.sm,
   },
   input: {
-    height: 58,
+    height: 60,
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surfaceSecondary,
     paddingHorizontal: spacing.lg,
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
     color: colors.onSurface,
     marginBottom: spacing.lg,
   },
   errorText: {
     color: colors.error,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
   },
   ctaWrap: {
@@ -566,22 +589,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     backgroundColor: colors.surface,
   },
-  primaryButton: {
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadow.soft,
-  },
   primaryButtonText: {
     color: colors.onBrand,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "700",
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
   photoStep: {
     paddingHorizontal: spacing.xl,
@@ -590,26 +601,21 @@ const styles = StyleSheet.create({
   photoOptions: {
     gap: spacing.lg,
   },
-  photoOption: {
+  photoOptionContent: {
     flexDirection: "row",
-    alignItems: "center",
+    justifyContent: "flex-start",
     gap: spacing.lg,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: spacing.lg,
-    ...shadow.soft,
+    paddingHorizontal: spacing.lg,
   },
   photoOptionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
   },
   photoOptionText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
     color: colors.onSurface,
   },
@@ -622,14 +628,8 @@ const styles = StyleSheet.create({
     height: 240,
     borderRadius: radius.lg,
   },
-  ghostButton: {
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.xl,
-  },
   ghostButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: colors.onSurfaceTertiary,
   },
@@ -649,13 +649,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loadingTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
     color: colors.onSurface,
     textAlign: "center",
   },
   loadingMsg: {
-    fontSize: 15,
+    fontSize: 17,
     color: colors.onSurfaceTertiary,
     textAlign: "center",
   },
@@ -670,21 +670,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.md,
-    ...shadow.soft,
+    shadowColor: "#22c55e",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    elevation: 6,
   },
-  revealButton: {
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.xxl,
-    minWidth: 240,
-    ...shadow.soft,
+  revealButtonWrap: {
+    minWidth: 260,
   },
   revealButtonText: {
     color: colors.onBrand,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "700",
   },
   errorCircle: {
@@ -716,17 +713,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.borderStrong,
   },
   sheetTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
     color: colors.onSurface,
   },
   sheetText: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.onSurfaceTertiary,
     textAlign: "center",
-    lineHeight: 21,
-  },
-  sheetButton: {
-    width: "100%",
+    lineHeight: 22,
   },
 });

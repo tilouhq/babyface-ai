@@ -15,9 +15,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  LiquidGlassButton,
+  LiquidGlassIconButton,
+} from "@/src/components/LiquidGlassButton";
 import { useApp } from "@/src/context/AppContext";
 import { api, GenerationSummary, dataUri } from "@/src/lib/api";
-import { colors, radius, shadow, spacing } from "@/src/theme";
+import { colors, radius, spacing } from "@/src/theme";
 
 const { width: SW } = Dimensions.get("window");
 const GRID_GAP = 3;
@@ -72,21 +76,29 @@ export default function Profile() {
               <Ionicons name="person" size={48} color={colors.brand} />
             </View>
           )}
-          <Pressable testID="edit-avatar-pencil" onPress={openEdit} style={styles.pencilBadge}>
+          <LiquidGlassIconButton
+            testID="edit-avatar-pencil"
+            variant="primary"
+            size={32}
+            onPress={openEdit}
+            style={styles.pencilBadge}
+          >
             <Ionicons name="pencil" size={14} color={colors.surface} />
-          </Pressable>
+          </LiquidGlassIconButton>
         </View>
         <Text style={styles.name} testID="profile-name-text">
           {user?.name ?? ""}
         </Text>
         {user && <Text style={styles.age}>{user.age} ans</Text>}
-        <Pressable
+        <LiquidGlassButton
           testID="edit-profile-button"
+          variant="light"
+          height={46}
           onPress={openEdit}
-          style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
+          style={styles.editButtonWrap}
         >
           <Text style={styles.editButtonText}>Modifier</Text>
-        </Pressable>
+        </LiquidGlassButton>
       </View>
 
       <View style={styles.gridSection}>
@@ -98,7 +110,7 @@ export default function Profile() {
         ) : gens.length === 0 ? (
           <View style={styles.emptyState} testID="empty-generations-state">
             <MaterialCommunityIcons name="baby-face-outline" size={48} color={colors.borderStrong} />
-            <Text style={styles.emptyText}>Aucune génération pour l'instant</Text>
+            <Text style={styles.emptyText}>Aucune génération pour l’instant</Text>
           </View>
         ) : (
           <FlatList
@@ -107,8 +119,6 @@ export default function Profile() {
             keyExtractor={(item) => item.id}
             numColumns={3}
             style={styles.grid}
-            // La grille se remplit du bas vers le haut : ordre chronologique,
-            // contenu ancré en bas quand il y a peu d'éléments.
             contentContainerStyle={styles.gridContent}
             columnWrapperStyle={styles.gridRow}
             showsVerticalScrollIndicator={false}
@@ -163,54 +173,36 @@ const styles = StyleSheet.create({
   },
   pencilBadge: {
     position: "absolute",
-    bottom: 2,
-    right: 2,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: colors.surface,
-    ...shadow.soft,
+    bottom: 0,
+    right: 0,
   },
   name: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
     color: colors.onSurface,
     marginTop: spacing.md,
   },
   age: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.onSurfaceTertiary,
     marginTop: 2,
   },
-  editButton: {
+  editButtonWrap: {
     marginTop: spacing.md,
-    height: 44,
     paddingHorizontal: spacing.xxl,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
   },
   editButtonText: {
     color: colors.brand,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    paddingHorizontal: spacing.md,
   },
   gridSection: {
     flex: 1,
     paddingHorizontal: spacing.lg,
   },
   sectionLabel: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "800",
     color: colors.onSurface,
     marginBottom: spacing.md,
@@ -239,7 +231,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.muted,
     fontWeight: "600",
   },

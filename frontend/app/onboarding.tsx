@@ -2,14 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   KeyboardAwareScrollView,
   KeyboardStickyView,
@@ -17,8 +10,9 @@ import {
 import Animated, { FadeIn, FadeOut, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { LiquidGlassButton } from "@/src/components/LiquidGlassButton";
 import { useApp } from "@/src/context/AppContext";
-import { colors, radius, shadow, spacing } from "@/src/theme";
+import { colors, radius, spacing } from "@/src/theme";
 
 type Step = "name" | "age" | "source" | "loading" | "done";
 
@@ -116,16 +110,19 @@ export default function Onboarding() {
             <Ionicons name="checkmark" size={48} color={colors.surface} />
           </Animated.View>
         </View>
-        <Pressable
-          testID="onboarding-continue-button"
-          onPress={() => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            router.replace("/(tabs)");
-          }}
-          style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-        >
-          <Text style={styles.primaryButtonText}>Continuer</Text>
-        </Pressable>
+        <View style={styles.doneCta}>
+          <LiquidGlassButton
+            testID="onboarding-continue-button"
+            variant="primary"
+            fullWidth
+            onPress={() => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.replace("/(tabs)");
+            }}
+          >
+            <Text style={styles.primaryButtonText}>Continuer</Text>
+          </LiquidGlassButton>
+        </View>
       </Animated.View>
     );
   }
@@ -150,7 +147,7 @@ export default function Onboarding() {
       >
         {step === "name" && (
           <Animated.View key="name" entering={FadeIn.duration(350)} exiting={FadeOut.duration(150)}>
-            <Text style={styles.title}>Comment t'appelles-tu ?</Text>
+            <Text style={styles.title}>Comment t’appelles-tu ?</Text>
             <Text style={styles.subtitle}>On utilisera ton nom dans ton profil</Text>
             <TextInput
               testID="onboarding-name-input"
@@ -194,21 +191,32 @@ export default function Onboarding() {
               {SOURCES.map((s) => {
                 const selected = source === s.key;
                 return (
-                  <Pressable
+                  <LiquidGlassButton
                     key={s.key}
                     testID={`onboarding-source-${s.key}`}
+                    variant={selected ? "primary" : "light"}
+                    height={56}
+                    fullWidth
+                    borderRadius={radius.md}
                     onPress={() => {
                       Haptics.selectionAsync();
                       setSource(s.key);
                       setError(null);
                     }}
-                    style={[styles.sourceChip, selected && styles.sourceChipSelected]}
+                    contentStyle={styles.sourceContent}
                   >
-                    <Text style={[styles.sourceChipText, selected && styles.sourceChipTextSelected]}>
+                    <Text
+                      style={[
+                        styles.sourceChipText,
+                        selected && styles.sourceChipTextSelected,
+                      ]}
+                    >
                       {s.label}
                     </Text>
-                    {selected && <Ionicons name="checkmark-circle" size={20} color={colors.brand} />}
-                  </Pressable>
+                    {selected && (
+                      <Ionicons name="checkmark-circle" size={20} color={colors.surface} />
+                    )}
+                  </LiquidGlassButton>
                 );
               })}
             </View>
@@ -237,13 +245,14 @@ export default function Onboarding() {
 
       <KeyboardStickyView offset={{ closed: 0, opened: spacing.lg }}>
         <View style={[styles.ctaWrap, { paddingBottom: insets.bottom + spacing.lg }]}>
-          <Pressable
+          <LiquidGlassButton
             testID="onboarding-next-button"
+            variant="primary"
+            fullWidth
             onPress={goNext}
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
           >
             <Text style={styles.primaryButtonText}>Continuer</Text>
-          </Pressable>
+          </LiquidGlassButton>
         </View>
       </KeyboardStickyView>
     </View>
@@ -279,26 +288,25 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 17,
     color: colors.onSurfaceTertiary,
     marginTop: spacing.sm,
     marginBottom: spacing.xl,
   },
   input: {
-    height: 60,
+    height: 62,
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surfaceSecondary,
     paddingHorizontal: spacing.lg,
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
     color: colors.onSurface,
   },
   otherInput: {
@@ -307,32 +315,22 @@ const styles = StyleSheet.create({
   sourceList: {
     gap: spacing.md,
   },
-  sourceChip: {
-    flexDirection: "row",
-    alignItems: "center",
+  sourceContent: {
     justifyContent: "space-between",
-    height: 56,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
   },
-  sourceChipSelected: {
-    borderColor: colors.brand,
-    backgroundColor: colors.brandSoft,
-  },
   sourceChipText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "600",
     color: colors.onSurfaceSecondary,
   },
   sourceChipTextSelected: {
-    color: colors.brand,
+    color: colors.onBrand,
+    fontWeight: "700",
   },
   errorText: {
     color: colors.error,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     marginTop: spacing.md,
   },
@@ -341,23 +339,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     backgroundColor: colors.surface,
   },
-  primaryButton: {
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: spacing.xl,
-    ...shadow.soft,
-  },
   primaryButtonText: {
     color: colors.onBrand,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "700",
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
   loadingContainer: {
     justifyContent: "flex-end",
@@ -372,19 +357,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.xl,
   },
+  doneCta: {
+    paddingHorizontal: spacing.xl,
+  },
   doneTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: -0.5,
   },
   checkCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: colors.success,
     alignItems: "center",
     justifyContent: "center",
-    ...shadow.soft,
+    shadowColor: "#22c55e",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    elevation: 6,
   },
 });

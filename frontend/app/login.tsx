@@ -2,11 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radius, shadow, spacing } from "@/src/theme";
+import { LiquidGlassButton } from "@/src/components/LiquidGlassButton";
+import { colors, spacing } from "@/src/theme";
 
 export default function Login() {
   const router = useRouter();
@@ -24,20 +25,30 @@ export default function Login() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.xxxl, paddingBottom: insets.bottom + spacing.xl }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + spacing.xxxl, paddingBottom: insets.bottom + spacing.xl },
+      ]}
+    >
       <Animated.View entering={FadeInUp.duration(500)} style={styles.logoWrap}>
-        <Text style={styles.logoText} testID="login-logo-text">
-          babyface ai
-        </Text>
+        <Image
+          testID="login-logo-image"
+          source={require("@/assets/images/logo-wordmark.png")}
+          style={styles.wordmark}
+          resizeMode="contain"
+        />
         <Text style={styles.tagline}>Découvrez à quoi ressemblera votre futur bébé</Text>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(150).duration(500)} style={styles.buttons}>
-        <Pressable
+        <LiquidGlassButton
           testID="login-google-button"
+          variant="light"
           onPress={() => handleLogin("google")}
           disabled={loadingProvider !== null}
-          style={({ pressed }) => [styles.button, styles.googleButton, pressed && styles.pressed]}
+          fullWidth
+          height={58}
         >
           {loadingProvider === "google" ? (
             <ActivityIndicator color={colors.onSurface} />
@@ -47,13 +58,15 @@ export default function Login() {
               <Text style={styles.googleText}>Continuer avec Google</Text>
             </>
           )}
-        </Pressable>
+        </LiquidGlassButton>
 
-        <Pressable
+        <LiquidGlassButton
           testID="login-apple-button"
+          variant="dark"
           onPress={() => handleLogin("apple")}
           disabled={loadingProvider !== null}
-          style={({ pressed }) => [styles.button, styles.appleButton, pressed && styles.pressed]}
+          fullWidth
+          height={58}
         >
           {loadingProvider === "apple" ? (
             <ActivityIndicator color={colors.surface} />
@@ -63,11 +76,11 @@ export default function Login() {
               <Text style={styles.appleText}>Continuer avec Apple</Text>
             </>
           )}
-        </Pressable>
+        </LiquidGlassButton>
       </Animated.View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>En continuant, tu acceptes nos conditions d'utilisation</Text>
+        <Text style={styles.footerText}>En continuant, tu acceptes nos conditions d’utilisation</Text>
       </View>
     </View>
   );
@@ -84,60 +97,38 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxxl,
     gap: spacing.md,
   },
-  logoText: {
-    fontSize: 40,
-    fontWeight: "800",
-    color: colors.brand,
-    letterSpacing: -1,
+  wordmark: {
+    width: 260,
+    height: 60,
   },
   tagline: {
-    fontSize: 15,
+    fontSize: 17,
     color: colors.onSurfaceTertiary,
     textAlign: "center",
-    maxWidth: 260,
-    lineHeight: 22,
+    maxWidth: 280,
+    lineHeight: 24,
+    marginTop: spacing.sm,
   },
   buttons: {
     flex: 1,
     justifyContent: "center",
     gap: spacing.lg,
   },
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.md,
-    height: 56,
-    borderRadius: radius.pill,
-    ...shadow.soft,
-  },
-  googleButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  appleButton: {
-    backgroundColor: "#0f172a",
-  },
   googleText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
     color: colors.onSurface,
   },
   appleText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
     color: colors.surface,
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
   footer: {
     alignItems: "center",
   },
   footerText: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.muted,
     textAlign: "center",
   },

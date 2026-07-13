@@ -8,20 +8,22 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppProvider, ToastHost } from "@/src/context/AppContext";
-import { useIconFonts } from "@/src/hooks/use-icon-fonts";
+import { useAppFonts } from "@/src/hooks/use-app-fonts";
+import { patchDefaultFont } from "@/src/lib/patch-default-font";
 
 // Disable logbox errors etc so that users can see the app
 // and agent works as expected.
 LogBox.ignoreAllLogs(true);
 
-// Keep the native splash visible from cold start until icon fonts register.
-// Required because @expo/vector-icons' componentDidMount fallback fires
-// Font.loadAsync against a broken vendor path if any <Icon> mounts before
-// the family is registered — which throws on Android Expo Go.
+// Applies Instrument Serif to <Text> and <TextInput> globally as soon as this
+// module is evaluated (font file is loaded a moment later by useAppFonts).
+patchDefaultFont();
+
+// Keep the native splash visible from cold start until fonts register.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useIconFonts();
+  const [loaded, error] = useAppFonts();
 
   useEffect(() => {
     if (loaded || error) {
@@ -29,8 +31,7 @@ export default function RootLayout() {
     }
   }, [loaded, error]);
 
-  // If the CDN is unreachable we fall through on error rather than wedging
-  // the app — icons will tofu, but the app still boots.
+  // Fall through on error rather than wedging the app.
   if (!loaded && !error) return null;
 
   return (

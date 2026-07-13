@@ -1,10 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
+import { LiquidGlassButton } from "@/src/components/LiquidGlassButton";
 import ResultCards from "@/src/components/ResultCards";
 import { api, Generation } from "@/src/lib/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { colors, spacing } from "@/src/theme";
 
 export default function GenerationDetail() {
   const router = useRouter();
@@ -24,13 +25,14 @@ export default function GenerationDetail() {
     return (
       <View style={styles.center} testID="generation-detail-error">
         <Text style={styles.errorText}>Impossible de charger cette génération</Text>
-        <Pressable
+        <LiquidGlassButton
           testID="detail-back-button"
+          variant="primary"
+          height={50}
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.85 }]}
         >
           <Text style={styles.backButtonText}>Retour</Text>
-        </Pressable>
+        </LiquidGlassButton>
       </View>
     );
   }
@@ -77,22 +79,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   errorText: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.onSurfaceTertiary,
     fontWeight: "600",
     textAlign: "center",
   },
-  backButton: {
-    height: 48,
-    paddingHorizontal: spacing.xxl,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   backButtonText: {
     color: colors.onBrand,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
   },
 });

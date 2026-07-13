@@ -7,7 +7,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   Platform,
-  Pressable,
   Share,
   StyleSheet,
   Text,
@@ -25,6 +24,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  LiquidGlassButton,
+  LiquidGlassIconButton,
+} from "@/src/components/LiquidGlassButton";
 import { useApp } from "@/src/context/AppContext";
 import { dataUri } from "@/src/lib/api";
 import { colors, genderColor, genderSoft, radius, shadow, spacing } from "@/src/theme";
@@ -173,6 +176,7 @@ function BabyContent({
   const scale = useSharedValue(1);
   const [confettiOn, setConfettiOn] = useState(false);
   const accent = genderColor(data.gender);
+  const shareVariant = data.gender === "boy" ? "blue" : "pink";
 
   useEffect(() => {
     if (isTop) {
@@ -204,21 +208,25 @@ function BabyContent({
         <Text style={styles.cardStats}>Taille adulte potentielle : {data.predictedHeight} cm</Text>
       </View>
       <View style={styles.babyButtons}>
-        <Pressable
+        <LiquidGlassButton
           testID="share-result-button"
+          variant={shareVariant}
+          height={50}
+          fullWidth
           onPress={onShare}
-          style={({ pressed }) => [styles.shareButton, pressed && styles.pressed]}
         >
           <Ionicons name="share-outline" size={20} color={colors.onBrand} />
           <Text style={styles.shareButtonText}>Partager</Text>
-        </Pressable>
-        <Pressable
+        </LiquidGlassButton>
+        <LiquidGlassButton
           testID="close-result-button"
+          variant="ghost"
+          height={44}
+          fullWidth
           onPress={onClose}
-          style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
         >
           <Text style={styles.closeButtonText}>Fermer</Text>
-        </Pressable>
+        </LiquidGlassButton>
       </View>
       {confettiOn && (
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
@@ -302,9 +310,14 @@ export default function ResultCards({ data, onClose }: { data: CardData; onClose
             <View key={i} style={[styles.dot, i === topIndex && styles.dotActive]} />
           ))}
         </View>
-        <Pressable testID="cards-exit-button" onPress={onClose} style={styles.exitButton}>
-          <Ionicons name="close" size={24} color={colors.onSurfaceTertiary} />
-        </Pressable>
+        <LiquidGlassIconButton
+          testID="cards-exit-button"
+          variant="ghost"
+          size={44}
+          onPress={onClose}
+        >
+          <Ionicons name="close" size={20} color={colors.onSurfaceTertiary} />
+        </LiquidGlassIconButton>
       </View>
 
       <View style={styles.stackArea}>
@@ -367,12 +380,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand,
     width: 22,
   },
-  exitButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   stackArea: {
     flex: 1,
     alignItems: "center",
@@ -399,11 +406,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   cardLabel: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
   },
   cardStats: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: colors.onSurfaceTertiary,
   },
@@ -412,7 +419,7 @@ const styles = StyleSheet.create({
   },
   babyPhoto: {
     width: "100%",
-    height: CARD_H - 220,
+    height: CARD_H - 232,
   },
   babyLabelRow: {
     flexDirection: "row",
@@ -425,7 +432,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   babyGenderText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "800",
   },
   babyButtons: {
@@ -433,36 +440,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     gap: spacing.sm,
   },
-  shareButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    height: 48,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brand,
-    ...shadow.soft,
-  },
   shareButtonText: {
     color: colors.onBrand,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
   },
-  closeButton: {
-    height: 44,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surfaceTertiary,
-  },
   closeButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: colors.onSurfaceTertiary,
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
   confetti: {
     position: "absolute",
@@ -474,7 +460,7 @@ const styles = StyleSheet.create({
     minHeight: 24,
   },
   swipeHint: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
     color: colors.muted,
   },

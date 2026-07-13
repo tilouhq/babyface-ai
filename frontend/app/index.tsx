@@ -1,7 +1,6 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { useApp } from "@/src/context/AppContext";
@@ -31,10 +30,11 @@ export default function Splash() {
   return (
     <View style={styles.container} testID="splash-screen">
       <Animated.View entering={FadeIn.duration(600)} style={styles.logoWrap}>
-        <View style={styles.iconCircle}>
-          <MaterialCommunityIcons name="baby-face" size={72} color={colors.brand} />
-        </View>
-        <Text style={styles.logoText}>babyface ai</Text>
+        <Image
+          source={require("@/assets/images/logo-icon.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
       </Animated.View>
     </View>
   );
@@ -51,18 +51,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.lg,
   },
-  iconCircle: {
-    width: 128,
-    height: 128,
-    borderRadius: 64,
-    backgroundColor: colors.brandSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: colors.brand,
-    letterSpacing: -0.5,
+  logo: {
+    width: 180,
+    height: 180,
+    borderRadius: 40,
   },
 });

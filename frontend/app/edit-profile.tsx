@@ -4,23 +4,20 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   KeyboardAwareScrollView,
   KeyboardStickyView,
 } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  LiquidGlassButton,
+  LiquidGlassIconButton,
+} from "@/src/components/LiquidGlassButton";
 import { useApp } from "@/src/context/AppContext";
 import { dataUri } from "@/src/lib/api";
-import { colors, radius, shadow, spacing } from "@/src/theme";
+import { colors, radius, spacing } from "@/src/theme";
 
 export default function EditProfile() {
   const router = useRouter();
@@ -73,11 +70,16 @@ export default function EditProfile() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
       <View style={styles.header}>
-        <Pressable testID="edit-profile-back-button" onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={26} color={colors.onSurface} />
-        </Pressable>
+        <LiquidGlassIconButton
+          testID="edit-profile-back-button"
+          onPress={() => router.back()}
+          size={44}
+          variant="ghost"
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
+        </LiquidGlassIconButton>
         <Text style={styles.headerTitle}>Modifier le profil</Text>
-        <View style={styles.backButton} />
+        <View style={styles.headerSpacer} />
       </View>
 
       <KeyboardAwareScrollView
@@ -95,14 +97,15 @@ export default function EditProfile() {
               <Ionicons name="person" size={48} color={colors.brand} />
             </View>
           )}
-          <Pressable
+          <LiquidGlassButton
             testID="change-avatar-button"
             onPress={pickAvatar}
-            style={({ pressed }) => [styles.changePhotoButton, pressed && styles.pressed]}
+            variant="light"
+            height={44}
           >
             <Ionicons name="image-outline" size={18} color={colors.brand} />
             <Text style={styles.changePhotoText}>Changer la photo</Text>
-          </Pressable>
+          </LiquidGlassButton>
         </View>
 
         <Text style={styles.inputLabel}>Nom</Text>
@@ -118,18 +121,19 @@ export default function EditProfile() {
 
       <KeyboardStickyView offset={{ closed: 0, opened: spacing.lg }}>
         <View style={[styles.ctaWrap, { paddingBottom: insets.bottom + spacing.lg }]}>
-          <Pressable
+          <LiquidGlassButton
             testID="save-profile-button"
+            variant="primary"
+            fullWidth
             onPress={save}
             disabled={saving}
-            style={({ pressed }) => [styles.saveButton, pressed && styles.pressed]}
           >
             {saving ? (
               <ActivityIndicator color={colors.onBrand} />
             ) : (
               <Text style={styles.saveButtonText}>Enregistrer</Text>
             )}
-          </Pressable>
+          </LiquidGlassButton>
         </View>
       </KeyboardStickyView>
     </View>
@@ -150,14 +154,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: spacing.md,
   },
-  backButton: {
+  headerSpacer: {
     width: 44,
     height: 44,
-    alignItems: "center",
-    justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 19,
     fontWeight: "800",
     color: colors.onSurface,
   },
@@ -181,35 +183,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  changePhotoButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    height: 44,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brandSoft,
-  },
   changePhotoText: {
     color: colors.brand,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
     color: colors.onSurfaceSecondary,
     marginBottom: spacing.sm,
   },
   input: {
-    height: 58,
+    height: 60,
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surfaceSecondary,
     paddingHorizontal: spacing.lg,
-    fontSize: 17,
-    fontWeight: "600",
+    fontSize: 19,
     color: colors.onSurface,
   },
   ctaWrap: {
@@ -217,21 +209,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     backgroundColor: colors.surface,
   },
-  saveButton: {
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadow.soft,
-  },
   saveButtonText: {
     color: colors.onBrand,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "700",
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
 });
