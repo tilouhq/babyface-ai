@@ -1,0 +1,193 @@
+{
+  "app_name": "BabyFace AI",
+  "personality": "4 Tactile / Playful LIGHT",
+  "personality_one_liner": "A playful, vibrant, and highly tactile experience that turns AI baby generation into a delightful, gesture-driven social moment.",
+  "color": {
+    "surface": "#ffffff",
+    "onSurface": "#111827",
+    "surfaceSecondary": "#f8fafc",
+    "onSurfaceSecondary": "#334155",
+    "surfaceTertiary": "#f1f5f9",
+    "onSurfaceTertiary": "#475569",
+    "surfaceInverse": "#0f172a",
+    "onSurfaceInverse": "#ffffff",
+    "brand": "#987ad6",
+    "brandPrimary": "#987ad6",
+    "onBrandPrimary": "#ffffff",
+    "brandSecondary": "#3b82f6",
+    "onBrandSecondary": "#ffffff",
+    "brandTertiary": "#f472b6",
+    "onBrandTertiary": "#ffffff",
+    "success": "#22c55e",
+    "onSuccess": "#ffffff",
+    "warning": "#eab308",
+    "onWarning": "#ffffff",
+    "error": "#ef4444",
+    "onError": "#ffffff",
+    "info": "#3b82f6",
+    "onInfo": "#ffffff",
+    "border": "#e2e8f0",
+    "borderStrong": "#cbd5e1",
+    "divider": "#f1f5f9"
+  },
+  "typography": {
+    "displayFontFamily": "Plus Jakarta Sans",
+    "textFontFamily": "Nunito",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous padding, large thumb zones. Avoid dense clusters. Elements should feel like physical, touchable objects floating on the white canvas.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "pill": 999
+  },
+  "shadow_tier": "2",
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": "false",
+    "do's": [],
+    "dont's": [
+      "Avoid glassmorphism to keep the white background crisp and colors popping. Solid surfaces fit the Playful/Tactile aesthetic better here."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Splash",
+      "purpose": "Full screen logo presentation.",
+      "states": {
+        "loading": "Static logo view.",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Completely white background. Large centered app logo in Violet (#987ad6) or playful 3D baby icon."
+    },
+    {
+      "name": "Login",
+      "purpose": "User authentication via social providers.",
+      "states": {
+        "loading": "Spinner in the button being pressed.",
+        "empty": "N/A",
+        "error": "Toast with retry option."
+      },
+      "layout": "Text logo centered at the top. Two large tactile pill-shaped buttons centered vertically: 'Continue with Google' and 'Continue with Apple'. White background (#ffffff) exclusively."
+    },
+    {
+      "name": "OnboardingFlow",
+      "purpose": "Collect name, age, and referral source.",
+      "states": {
+        "loading": "Lightweight loading indicator pinned at the bottom.",
+        "empty": "N/A",
+        "error": "Validation errors below inputs in red."
+      },
+      "layout": "Step-by-step screens. Screen 1: Name input. Screen 2: Age input. Screen 3: 'How did you hear about us?' using a list of selectable pill chips (TikTok, Instagram, X, Friend, Other). 'Other' expands a text field. Large titles. 'Continue' button pinned to bottom."
+    },
+    {
+      "name": "SetupConfirmation",
+      "purpose": "Confirm onboarding completion.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Centered large green checkmark (animated if possible) with text 'Everything is set up!'. Large 'Continue' button pinned to the bottom."
+    },
+    {
+      "name": "MainTabs",
+      "purpose": "Root navigation for the primary app experience.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Bottom Tab Bar with 2 items. Left: 'BabyFace AI' (custom baby head icon). Right: 'Profile' (standard profile icon). Tapping the 'BabyFace AI' tab when already on it alternates its icon/theme color between blue (#3b82f6) and pink (#f472b6)."
+    },
+    {
+      "name": "BabyFaceAIGenerator",
+      "purpose": "Step-by-step data collection for the AI generation.",
+      "states": {
+        "loading": "Generating state: Fade transition to a dedicated loading screen with a playful spinner.",
+        "empty": "Initial state: Large centered 'Start' button.",
+        "error": "Failed generation overlay."
+      },
+      "layout": "Top right: Credits counter badge. Center: 'Start' button. When started, flow presents sequentially: Man Age+Height -> Man Photo Upload -> Woman Age+Height -> Woman Photo Upload. Use large touch targets, clear typography, and bottom-pinned Next buttons."
+    },
+    {
+      "name": "RevealScreen",
+      "purpose": "Transition screen after generation before showing results.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Large green checkmark centered. Big primary button 'Reveal Results' pinned at the bottom."
+    },
+    {
+      "name": "ResultCards",
+      "purpose": "Tinder-style swipeable interaction showing the parents and generated baby.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "3D stacked cards layout. 3 total cards to swipe right on. Card 1: Man (Photo, Age, Height). Card 2: Woman (Photo, Age, Height). Card 3: Generated Baby (Features a 'surprise' animation when revealed, plus 'Potential Adult Height' stat). Bottom contains 'Share' (icon) and 'Close' buttons."
+    },
+    {
+      "name": "Profile",
+      "purpose": "Manage user profile and view past generations.",
+      "states": {
+        "loading": "Skeleton grid for loading past images.",
+        "empty": "Empty state illustration with text 'No generations yet!'.",
+        "error": "Failed to load grid."
+      },
+      "layout": "Top section: Profile picture centered with a small edit pencil badge. 'Edit' button below it. Bottom section: Instagram-style 3-column masonry/square grid of past generated babies. Tapping a grid item opens a read-only modal with the 3 swipeable cards."
+    }
+  ],
+  "images": {
+    "baby_placeholder": {
+      "url": "https://images.unsplash.com/photo-1706953855939-22e0de78f73a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxjdXRlJTIwYmFieSUyMHNtaWxlJTIwcGFzdGVsfGVufDB8fHx8MTc4MzkwMjM5M3ww&ixlib=rb-4.1.0&q=85",
+      "alt": "Generated Baby Placeholder"
+    },
+    "couple_placeholder": {
+      "url": "https://images.unsplash.com/photo-1733433306053-1b22d09f7d82?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwxfHx5b3VuZyUyMGFkdWx0JTIwY291cGxlJTIwcG9ydHJhaXQlMjBjbGVhbiUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzgzOTAyMzkzfDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Parent Placeholder"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Strictly adhere to the '#ffffff' pure white background globally. DO NOT use off-white or gray background colors for the root layout to maintain the required aesthetic.",
+    "Buttons and active UI elements should use the Violet brand color (#987ad6) unless it is representing a gender-specific action, in which case use Blue (#3b82f6) or Pink (#f472b6).",
+    "Implement the Bottom Tab 'BabyFace AI' icon gesture carefully: tapping the active tab should toggle the active tint color between Blue and Pink in the state.",
+    "Build the ResultCards screen using react-native-reanimated and react-native-gesture-handler to create a true Tinder-style swipeable card stack. Ensure cards are stacked with 3D depth and animate smoothly off-screen when swiped right.",
+    "Add a Lottie or Reanimated 'surprise' animation (e.g., scale bounce, confetti) that triggers exactly when the 3rd card (the Baby) becomes the top card in the stack.",
+    "For the Profile screen grid, ensure images are cropped square in a 3-column layout mimicking Instagram. Tapping them should reuse the ResultCards component in a read-only mode.",
+    "Avoid glassmorphism. The playful/tactile design personality relies on solid, bold, touchable shapes against the pure white canvas with soft shadows (Tier 2)."
+  ]
+}
