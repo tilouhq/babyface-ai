@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "BabyFace AI",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,11 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.emergent.babyfaceai.cmgwrb"
+      "bundleIdentifier": "com.emergent.babyfaceai.cmgwrb",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Prends une photo pour générer votre futur bébé",
+        "NSPhotoLibraryUsageDescription": "Choisis une photo pour générer votre futur bébé"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +22,8 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.emergent.babyfaceai.cmgwrb"
+      "package": "com.emergent.babyfaceai.cmgwrb",
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
     },
     "web": {
       "bundler": "metro",
