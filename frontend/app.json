@@ -12,8 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.emergent.babyfaceai.cmgwrb",
       "infoPlist": {
-        "NSCameraUsageDescription": "Prends une photo pour générer votre futur bébé",
-        "NSPhotoLibraryUsageDescription": "Choisis une photo pour générer votre futur bébé"
+        "NSCameraUsageDescription": "Prends une photo pour g\u00e9n\u00e9rer votre futur b\u00e9b\u00e9",
+        "NSPhotoLibraryUsageDescription": "Choisis une photo pour g\u00e9n\u00e9rer votre futur b\u00e9b\u00e9"
       }
     },
     "android": {
@@ -23,7 +23,10 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.emergent.babyfaceai.cmgwrb",
-      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "bundler": "metro",
