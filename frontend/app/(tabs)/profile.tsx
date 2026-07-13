@@ -1,8 +1,7 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -13,8 +12,14 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon3D } from "@/src/components/Icon3D";
 import {
   LiquidGlassButton,
   LiquidGlassIconButton,
@@ -30,7 +35,7 @@ const CELL = (SW - spacing.lg * 2 - GRID_GAP * 2) / 3;
 export default function Profile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, refreshUser } = useApp();
+  const { user, refreshUser, t } = useApp();
   const [gens, setGens] = useState<GenerationSummary[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,13 +47,21 @@ export default function Profile() {
     } catch {
       setGens([]);
     }
-  }, [user?.id]);
+  }, [user]);
 
+  // Keep latest load() in a ref so the focus effect stays stable.
+  const loadRef = useRef(load);
+  loadRef.current = load;
+
+  const opacity = useSharedValue(1);
   useFocusEffect(
     useCallback(() => {
-      load();
-    }, [load]),
+      opacity.value = 0;
+      opacity.value = withTiming(1, { duration: 320 });
+      loadRef.current();
+    }, [opacity]),
   );
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -61,8 +74,28 @@ export default function Profile() {
     router.push("/edit-profile");
   };
 
+  const openSettings = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push("/settings");
+  };
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
+    <Animated.View
+      style={[styles.container, { paddingTop: insets.top + spacing.md }, fadeStyle]}
+    >
+      {/* Top bar with settings icon in the top-right. */}
+      <View style={styles.topBar}>
+        <View style={styles.topSpacer} />
+        <LiquidGlassIconButton
+          testID="profile-settings-button"
+          variant="light"
+          size={42}
+          onPress={openSettings}
+        >
+          <Icon3D family="ionicons" name="settings-outline" size={20} variant="brand" />
+        </LiquidGlassIconButton>
+      </View>
+
       <View style={styles.profileHeader}>
         <View style={styles.avatarWrap}>
           {user?.avatar_base64 ? (
@@ -73,7 +106,7 @@ export default function Profile() {
             />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <Ionicons name="person" size={48} color={colors.brand} />
+              <Icon3D family="ionicons" name="person" size={52} variant="brand" />
             </View>
           )}
           <LiquidGlassIconButton
@@ -83,34 +116,41 @@ export default function Profile() {
             onPress={openEdit}
             style={styles.pencilBadge}
           >
-            <Ionicons name="pencil" size={14} color={colors.surface} />
+            <Icon3D family="ionicons" name="pencil" size={14} color={colors.surface} />
           </LiquidGlassIconButton>
         </View>
         <Text style={styles.name} testID="profile-name-text">
           {user?.name ?? ""}
         </Text>
-        {user && <Text style={styles.age}>{user.age} ans</Text>}
+        {user && (
+          <Text style={styles.age}>{t("profile_age", { n: user.age })}</Text>
+        )}
         <LiquidGlassButton
           testID="edit-profile-button"
           variant="light"
-          height={46}
+          height={44}
           onPress={openEdit}
           style={styles.editButtonWrap}
         >
-          <Text style={styles.editButtonText}>Modifier</Text>
+          <Text style={styles.editButtonText}>{t("profile_edit")}</Text>
         </LiquidGlassButton>
       </View>
 
       <View style={styles.gridSection}>
-        <Text style={styles.sectionLabel}>Mes générations</Text>
+        <Text style={styles.sectionLabel}>{t("profile_my_gens")}</Text>
         {gens === null ? (
           <View style={styles.gridLoading}>
             <ActivityIndicator color={colors.brand} />
           </View>
         ) : gens.length === 0 ? (
           <View style={styles.emptyState} testID="empty-generations-state">
-            <MaterialCommunityIcons name="baby-face-outline" size={48} color={colors.borderStrong} />
-            <Text style={styles.emptyText}>Aucune génération pour l’instant</Text>
+            <Icon3D
+              family="material-community"
+              name="baby-face-outline"
+              size={48}
+              variant="muted"
+            />
+            <Text style={styles.emptyText}>{t("profile_empty")}</Text>
           </View>
         ) : (
           <FlatList
@@ -123,7 +163,11 @@ export default function Profile() {
             columnWrapperStyle={styles.gridRow}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.brand}
+              />
             }
             renderItem={({ item }) => (
               <Pressable
@@ -144,7 +188,7 @@ export default function Profile() {
           />
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -153,10 +197,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
   },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xs,
+  },
+  topSpacer: {
+    width: 42,
+    height: 42,
+  },
   profileHeader: {
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
   },
   avatarWrap: {
     position: "relative",
@@ -200,32 +255,33 @@ const styles = StyleSheet.create({
   gridSection: {
     flex: 1,
     paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
   },
   sectionLabel: {
     fontSize: 18,
     fontWeight: "800",
     color: colors.onSurface,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   grid: {
     flex: 1,
   },
   gridContent: {
-    flexGrow: 1,
-    justifyContent: "flex-end",
+    // Instagram-style: content anchored to the TOP, filling downward.
     gap: GRID_GAP,
+    paddingTop: 0,
     paddingBottom: spacing.md,
   },
   gridRow: {
     gap: GRID_GAP,
   },
   gridLoading: {
-    flex: 1,
+    paddingVertical: spacing.xxl,
     alignItems: "center",
     justifyContent: "center",
   },
   emptyState: {
-    flex: 1,
+    paddingVertical: spacing.xxxl,
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.md,

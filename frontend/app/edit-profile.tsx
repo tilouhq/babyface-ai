@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
@@ -11,6 +10,7 @@ import {
 } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon3D } from "@/src/components/Icon3D";
 import {
   LiquidGlassButton,
   LiquidGlassIconButton,
@@ -22,7 +22,7 @@ import { colors, radius, spacing } from "@/src/theme";
 export default function EditProfile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, updateUser, showToast } = useApp();
+  const { user, updateUser, showToast, t } = useApp();
 
   const [name, setName] = useState(user?.name ?? "");
   const [avatar, setAvatar] = useState<string | null>(user?.avatar_base64 ?? null);
@@ -42,13 +42,13 @@ export default function EditProfile() {
         setAvatar(res.assets[0].base64);
       }
     } catch {
-      showToast("Impossible d'ouvrir la galerie");
+      showToast(t("editp_toast_gallery_err"));
     }
   };
 
   const save = async () => {
     if (name.trim().length < 2) {
-      showToast("Entre un nom valide");
+      showToast(t("editp_err_name"));
       return;
     }
     setSaving(true);
@@ -58,10 +58,10 @@ export default function EditProfile() {
         ...(avatar ? { avatar_base64: avatar } : {}),
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast("Profil mis à jour");
+      showToast(t("editp_toast_ok"));
       router.back();
     } catch {
-      showToast("Une erreur est survenue");
+      showToast(t("editp_toast_err"));
     } finally {
       setSaving(false);
     }
@@ -76,9 +76,9 @@ export default function EditProfile() {
           size={44}
           variant="ghost"
         >
-          <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
+          <Icon3D family="ionicons" name="chevron-back" size={22} variant="dark" />
         </LiquidGlassIconButton>
-        <Text style={styles.headerTitle}>Modifier le profil</Text>
+        <Text style={styles.headerTitle}>{t("editp_title")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -94,7 +94,7 @@ export default function EditProfile() {
             <Image source={{ uri: dataUri(avatar) }} style={styles.avatar} contentFit="cover" />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <Ionicons name="person" size={48} color={colors.brand} />
+              <Icon3D family="ionicons" name="person" size={48} variant="brand" />
             </View>
           )}
           <LiquidGlassButton
@@ -103,16 +103,16 @@ export default function EditProfile() {
             variant="light"
             height={44}
           >
-            <Ionicons name="image-outline" size={18} color={colors.brand} />
-            <Text style={styles.changePhotoText}>Changer la photo</Text>
+            <Icon3D family="ionicons" name="image-outline" size={18} variant="brand" />
+            <Text style={styles.changePhotoText}>{t("editp_change_photo")}</Text>
           </LiquidGlassButton>
         </View>
 
-        <Text style={styles.inputLabel}>Nom</Text>
+        <Text style={styles.inputLabel}>{t("editp_name")}</Text>
         <TextInput
           testID="edit-name-input"
           style={styles.input}
-          placeholder="Ton nom"
+          placeholder={t("editp_placeholder")}
           placeholderTextColor={colors.muted}
           value={name}
           onChangeText={setName}
@@ -131,7 +131,7 @@ export default function EditProfile() {
             {saving ? (
               <ActivityIndicator color={colors.onBrand} />
             ) : (
-              <Text style={styles.saveButtonText}>Enregistrer</Text>
+              <Text style={styles.saveButtonText}>{t("common_save")}</Text>
             )}
           </LiquidGlassButton>
         </View>
@@ -145,19 +145,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
   },
-  flex: {
-    flex: 1,
-  },
+  flex: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.md,
   },
-  headerSpacer: {
-    width: 44,
-    height: 44,
-  },
+  headerSpacer: { width: 44, height: 44 },
   headerTitle: {
     fontSize: 19,
     fontWeight: "800",
@@ -173,11 +168,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
     gap: spacing.md,
   },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
+  avatar: { width: 120, height: 120, borderRadius: 60 },
   avatarPlaceholder: {
     backgroundColor: colors.brandSoft,
     alignItems: "center",

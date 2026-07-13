@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -11,10 +12,17 @@ import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { api, User } from "@/src/lib/api";
+import {
+  detectDeviceLanguage,
+  Language,
+  translate,
+  SUPPORTED_LANGUAGES,
+} from "@/src/lib/i18n";
 import { colors, radius, shadow, spacing } from "@/src/theme";
 import { storage } from "@/src/utils/storage";
 
 const USER_ID_KEY = "babyface_user_id";
+const LANG_KEY = "babyface_language";
 
 type Gender = "boy" | "girl";
 
@@ -26,8 +34,12 @@ interface AppContextValue {
   createUser: (name: string, age: number, source: string) => Promise<void>;
   updateUser: (data: { name?: string; avatar_base64?: string }) => Promise<void>;
   refreshUser: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   showToast: (message: string) => void;
   toastMessage: string | null;
+  language: Language;
+  setLanguage: (l: Language) => Promise<void>;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -36,11 +48,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [gender, setGender] = useState<Gender>("boy");
+  const [language, setLanguageState] = useState<Language>(detectDeviceLanguage());
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     (async () => {
+      // Load persisted language override (falls back to device locale detected above)
+      const storedLang = await storage.getItem<Language | null>(LANG_KEY, null);
+      if (storedLang && SUPPORTED_LANGUAGES.includes(storedLang)) {
+        setLanguageState(storedLang);
+      }
       const storedId = await storage.getItem<string | null>(USER_ID_KEY, null);
       if (storedId) {
         try {
@@ -83,29 +101,68 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  const deleteAccount = useCallback(async () => {
+    if (!user) return;
+    try {
+      await api.deleteUser(user.id);
+    } catch {
+      // even if the network call fails, we still wipe local state so the
+      // user "restarts from zero" as expected during the app test.
+    }
+    await storage.removeItem(USER_ID_KEY);
+    setUser(null);
+  }, [user]);
+
   const showToast = useCallback((message: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToastMessage(message);
     toastTimer.current = setTimeout(() => setToastMessage(null), 2600);
   }, []);
 
-  return (
-    <AppContext.Provider
-      value={{
-        ready,
-        user,
-        gender,
-        toggleGender,
-        createUser,
-        updateUser,
-        refreshUser,
-        showToast,
-        toastMessage,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+  const setLanguage = useCallback(async (l: Language) => {
+    await storage.setItem(LANG_KEY, l);
+    setLanguageState(l);
+  }, []);
+
+  const t = useCallback(
+    (key: string, vars?: Record<string, string | number>) => translate(key, language, vars),
+    [language],
   );
+
+  const value = useMemo<AppContextValue>(
+    () => ({
+      ready,
+      user,
+      gender,
+      toggleGender,
+      createUser,
+      updateUser,
+      refreshUser,
+      deleteAccount,
+      showToast,
+      toastMessage,
+      language,
+      setLanguage,
+      t,
+    }),
+    [
+      ready,
+      user,
+      gender,
+      toggleGender,
+      createUser,
+      updateUser,
+      refreshUser,
+      deleteAccount,
+      showToast,
+      toastMessage,
+      language,
+      setLanguage,
+      t,
+    ],
+  );
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
 export function useApp(): AppContextValue {

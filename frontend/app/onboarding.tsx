@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -10,6 +9,7 @@ import {
 import Animated, { FadeIn, FadeOut, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon3D } from "@/src/components/Icon3D";
 import { LiquidGlassButton } from "@/src/components/LiquidGlassButton";
 import { useApp } from "@/src/context/AppContext";
 import { colors, radius, spacing } from "@/src/theme";
@@ -17,17 +17,17 @@ import { colors, radius, spacing } from "@/src/theme";
 type Step = "name" | "age" | "source" | "loading" | "done";
 
 const SOURCES = [
-  { key: "tiktok", label: "TikTok" },
-  { key: "instagram", label: "Instagram" },
-  { key: "x", label: "X" },
-  { key: "ami", label: "Un ami" },
-  { key: "autre", label: "Autre" },
+  { key: "tiktok", labelKey: "onb_source_tiktok" },
+  { key: "instagram", labelKey: "onb_source_instagram" },
+  { key: "x", labelKey: "onb_source_x" },
+  { key: "ami", labelKey: "onb_source_ami" },
+  { key: "autre", labelKey: "onb_source_autre" },
 ];
 
 export default function Onboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { createUser, showToast } = useApp();
+  const { createUser, showToast, t } = useApp();
 
   const [step, setStep] = useState<Step>("name");
   const [name, setName] = useState("");
@@ -41,24 +41,24 @@ export default function Onboarding() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (step === "name") {
       if (name.trim().length < 2) {
-        setError("Entre ton nom (au moins 2 caractères)");
+        setError(t("onb_err_name"));
         return;
       }
       setStep("age");
     } else if (step === "age") {
       const a = parseInt(age, 10);
       if (!a || a < 13 || a > 100) {
-        setError("Entre un âge valide (13 à 100 ans)");
+        setError(t("onb_err_age"));
         return;
       }
       setStep("source");
     } else if (step === "source") {
       if (!source) {
-        setError("Choisis une option");
+        setError(t("onb_err_source_missing"));
         return;
       }
       if (source === "autre" && otherSource.trim().length < 2) {
-        setError("Précise comment tu nous as connus");
+        setError(t("onb_err_source_other"));
         return;
       }
       setStep("loading");
@@ -75,7 +75,7 @@ export default function Onboarding() {
         const wait = Math.max(0, 1400 - (Date.now() - start));
         setTimeout(() => setStep("done"), wait);
       } catch {
-        showToast("Une erreur est survenue, réessaie");
+        showToast(t("onb_err_generic"));
         setStep("source");
       }
     })();
@@ -105,9 +105,9 @@ export default function Onboarding() {
         testID="onboarding-done-screen"
       >
         <View style={styles.doneCenter}>
-          <Text style={styles.doneTitle}>Tout est configuré</Text>
+          <Text style={styles.doneTitle}>{t("onb_done_title")}</Text>
           <Animated.View entering={ZoomIn.delay(200).springify()} style={styles.checkCircle}>
-            <Ionicons name="checkmark" size={48} color={colors.surface} />
+            <Icon3D family="ionicons" name="checkmark" size={48} color={colors.surface} />
           </Animated.View>
         </View>
         <View style={styles.doneCta}>
@@ -120,7 +120,7 @@ export default function Onboarding() {
               router.replace("/(tabs)");
             }}
           >
-            <Text style={styles.primaryButtonText}>Continuer</Text>
+            <Text style={styles.primaryButtonText}>{t("common_continue")}</Text>
           </LiquidGlassButton>
         </View>
       </Animated.View>
@@ -147,12 +147,12 @@ export default function Onboarding() {
       >
         {step === "name" && (
           <Animated.View key="name" entering={FadeIn.duration(350)} exiting={FadeOut.duration(150)}>
-            <Text style={styles.title}>Comment t’appelles-tu ?</Text>
-            <Text style={styles.subtitle}>On utilisera ton nom dans ton profil</Text>
+            <Text style={styles.title}>{t("onb_name_title")}</Text>
+            <Text style={styles.subtitle}>{t("onb_name_subtitle")}</Text>
             <TextInput
               testID="onboarding-name-input"
               style={styles.input}
-              placeholder="Ton nom"
+              placeholder={t("onb_name_placeholder")}
               placeholderTextColor={colors.muted}
               value={name}
               onChangeText={setName}
@@ -165,15 +165,15 @@ export default function Onboarding() {
 
         {step === "age" && (
           <Animated.View key="age" entering={FadeIn.duration(350)} exiting={FadeOut.duration(150)}>
-            <Text style={styles.title}>Quel âge as-tu ?</Text>
-            <Text style={styles.subtitle}>Ton âge reste privé</Text>
+            <Text style={styles.title}>{t("onb_age_title")}</Text>
+            <Text style={styles.subtitle}>{t("onb_age_subtitle")}</Text>
             <TextInput
               testID="onboarding-age-input"
               style={styles.input}
-              placeholder="Ton âge"
+              placeholder={t("onb_age_placeholder")}
               placeholderTextColor={colors.muted}
               value={age}
-              onChangeText={(t) => setAge(t.replace(/[^0-9]/g, ""))}
+              onChangeText={(txt) => setAge(txt.replace(/[^0-9]/g, ""))}
               keyboardType="number-pad"
               maxLength={3}
               autoFocus
@@ -185,8 +185,8 @@ export default function Onboarding() {
 
         {step === "source" && (
           <Animated.View key="source" entering={FadeIn.duration(350)} exiting={FadeOut.duration(150)}>
-            <Text style={styles.title}>Comment as-tu connu babyface ai ?</Text>
-            <Text style={styles.subtitle}>Ça nous aide à grandir</Text>
+            <Text style={styles.title}>{t("onb_source_title")}</Text>
+            <Text style={styles.subtitle}>{t("onb_source_subtitle")}</Text>
             <View style={styles.sourceList}>
               {SOURCES.map((s) => {
                 const selected = source === s.key;
@@ -211,10 +211,10 @@ export default function Onboarding() {
                         selected && styles.sourceChipTextSelected,
                       ]}
                     >
-                      {s.label}
+                      {t(s.labelKey)}
                     </Text>
                     {selected && (
-                      <Ionicons name="checkmark-circle" size={20} color={colors.surface} />
+                      <Icon3D family="ionicons" name="checkmark-circle" size={20} color={colors.surface} />
                     )}
                   </LiquidGlassButton>
                 );
@@ -225,7 +225,7 @@ export default function Onboarding() {
                 <TextInput
                   testID="onboarding-other-source-input"
                   style={[styles.input, styles.otherInput]}
-                  placeholder="Précise..."
+                  placeholder={t("onb_source_other_placeholder")}
                   placeholderTextColor={colors.muted}
                   value={otherSource}
                   onChangeText={setOtherSource}
@@ -251,7 +251,7 @@ export default function Onboarding() {
             fullWidth
             onPress={goNext}
           >
-            <Text style={styles.primaryButtonText}>Continuer</Text>
+            <Text style={styles.primaryButtonText}>{t("common_continue")}</Text>
           </LiquidGlassButton>
         </View>
       </KeyboardStickyView>

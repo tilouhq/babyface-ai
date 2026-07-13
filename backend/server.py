@@ -236,11 +236,11 @@ async def create_generation(payload: GenerationCreate):
 
 @api_router.get("/generations", response_model=List[GenerationSummary])
 async def list_generations(user_id: str):
-    # Tri chronologique croissant : la grille du profil se remplit du bas vers le haut.
+    # Tri chronologique décroissant : la plus récente en premier (grille type Instagram).
     docs = await db.generations.find(
         {"user_id": user_id},
         {"_id": 0, "id": 1, "gender": 1, "baby_photo_base64": 1, "created_at": 1},
-    ).sort("created_at", 1).to_list(500)
+    ).sort("created_at", -1).to_list(500)
     return [GenerationSummary(**d) for d in docs]
 
 
@@ -250,6 +250,18 @@ async def get_generation(generation_id: str):
     if not doc:
         raise HTTPException(status_code=404, detail="generation_not_found")
     return Generation(**doc)
+
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str):
+    # Suppression totale du compte : l'utilisateur ET toutes ses générations
+    # sont supprimés définitivement de la base.
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="user_not_found")
+    await db.generations.delete_many({"user_id": user_id})
+    await db.users.delete_one({"id": user_id})
+    return {"deleted": True, "user_id": user_id}
 
 
 app.include_router(api_router)

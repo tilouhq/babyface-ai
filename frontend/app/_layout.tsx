@@ -11,15 +11,10 @@ import { AppProvider, ToastHost } from "@/src/context/AppContext";
 import { useAppFonts } from "@/src/hooks/use-app-fonts";
 import { patchDefaultFont } from "@/src/lib/patch-default-font";
 
-// Disable logbox errors etc so that users can see the app
-// and agent works as expected.
 LogBox.ignoreAllLogs(true);
 
-// Applies Instrument Serif to <Text> and <TextInput> globally as soon as this
-// module is evaluated (font file is loaded a moment later by useAppFonts).
 patchDefaultFont();
 
-// Keep the native splash visible from cold start until fonts register.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -31,7 +26,6 @@ export default function RootLayout() {
     }
   }, [loaded, error]);
 
-  // Fall through on error rather than wedging the app.
   if (!loaded && !error) return null;
 
   return (
@@ -45,7 +39,22 @@ export default function RootLayout() {
                 headerShown: false,
                 contentStyle: { backgroundColor: "#ffffff" },
               }}
-            />
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="edit-profile" />
+              <Stack.Screen name="generate" />
+              <Stack.Screen name="generation/[id]" />
+              <Stack.Screen
+                name="settings"
+                options={{
+                  presentation: "modal",
+                  animation: "slide_from_bottom",
+                }}
+              />
+            </Stack>
             <ToastHost />
           </AppProvider>
         </KeyboardProvider>

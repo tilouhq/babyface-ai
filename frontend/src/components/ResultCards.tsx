@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
@@ -24,6 +23,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon3D } from "@/src/components/Icon3D";
 import {
   LiquidGlassButton,
   LiquidGlassIconButton,
@@ -33,8 +33,14 @@ import { dataUri } from "@/src/lib/api";
 import { colors, genderColor, genderSoft, radius, shadow, spacing } from "@/src/theme";
 
 const { width: SW, height: SH } = Dimensions.get("window");
-const CARD_W = Math.min(SW - 56, 340);
-const CARD_H = Math.min(SH * 0.64, 560);
+// Card sized so the baby's face has real space (not cropped): a bit wider,
+// enough headroom below for label + stat + two buttons.
+const CARD_W = Math.min(SW - 48, 360);
+const CARD_H = Math.min(SH * 0.78, 660);
+// The photo area is a square equal to the card's inner width — photos coming
+// out of the picker (aspect [1,1]) and Gemini's head-and-shoulders framing
+// both fit perfectly with contentFit="cover" without cropping the face.
+const PHOTO_SIZE = CARD_W;
 
 export interface CardData {
   father: { photo: string; age: number; height: number };
@@ -42,7 +48,8 @@ export interface CardData {
   baby: { photo: string; predictedHeight: number; gender: "boy" | "girl" };
 }
 
-const stripPrefix = (b64: string) => (b64.startsWith("data:") ? b64.split(",", 2)[1] : b64);
+const stripPrefix = (b64: string) =>
+  b64.startsWith("data:") ? b64.split(",", 2)[1] : b64;
 
 function SwipeCard({
   index,
@@ -85,9 +92,9 @@ function SwipeCard({
   const animStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: tx.value },
-      { translateY: depth.value * 18 },
-      { scale: 1 - Math.max(depth.value, 0) * 0.06 },
-      { rotate: `${tx.value / 20}deg` },
+      { translateY: depth.value * 16 },
+      { scale: 1 - Math.max(depth.value, 0) * 0.05 },
+      { rotate: `${tx.value / 22}deg` },
     ],
   }));
 
@@ -116,8 +123,14 @@ function ConfettiPiece({ index }: { index: number }) {
 
   useEffect(() => {
     ty.value = withDelay(index * 60, withTiming(CARD_H + 40, { duration: conf.duration }));
-    rot.value = withDelay(index * 60, withTiming(Math.random() > 0.5 ? 540 : -540, { duration: conf.duration + 300 }));
-    opacity.value = withDelay(conf.duration - 200, withTiming(0, { duration: 400 }));
+    rot.value = withDelay(
+      index * 60,
+      withTiming(Math.random() > 0.5 ? 540 : -540, { duration: conf.duration + 300 }),
+    );
+    opacity.value = withDelay(
+      conf.duration - 200,
+      withTiming(0, { duration: 400 }),
+    );
   }, [index, conf, ty, rot, opacity]);
 
   const style = useAnimatedStyle(() => ({
@@ -129,7 +142,12 @@ function ConfettiPiece({ index }: { index: number }) {
     <Animated.View
       style={[
         styles.confetti,
-        { left: conf.left, width: conf.size, height: conf.size, backgroundColor: conf.color },
+        {
+          left: conf.left,
+          width: conf.size,
+          height: conf.size,
+          backgroundColor: conf.color,
+        },
         style,
       ]}
     />
@@ -142,21 +160,21 @@ function ParentContent({
   age,
   height,
   accent,
+  statLabel,
 }: {
   label: string;
   photo: string;
   age: number;
   height: number;
   accent: string;
+  statLabel: string;
 }) {
   return (
     <>
-      <Image source={{ uri: dataUri(photo) }} style={styles.parentPhoto} contentFit="cover" />
+      <Image source={{ uri: dataUri(photo) }} style={styles.photoBox} contentFit="cover" />
       <View style={styles.cardInfo}>
         <Text style={[styles.cardLabel, { color: accent }]}>{label}</Text>
-        <Text style={styles.cardStats}>
-          {age} ans • {height} cm
-        </Text>
+        <Text style={styles.cardStats}>{statLabel}</Text>
       </View>
     </>
   );
@@ -167,16 +185,28 @@ function BabyContent({
   isTop,
   onShare,
   onClose,
+  labelBaby,
+  labelBoy,
+  labelGirl,
+  labelShare,
+  labelClose,
+  labelPredicted,
 }: {
   data: CardData["baby"];
   isTop: boolean;
   onShare: () => void;
   onClose: () => void;
+  labelBaby: string;
+  labelBoy: string;
+  labelGirl: string;
+  labelShare: string;
+  labelClose: string;
+  labelPredicted: string;
 }) {
   const scale = useSharedValue(1);
   const [confettiOn, setConfettiOn] = useState(false);
   const accent = genderColor(data.gender);
-  const shareVariant = data.gender === "boy" ? "blue" : "pink";
+  const shareVariant: "blue" | "pink" = data.gender === "boy" ? "blue" : "pink";
 
   useEffect(() => {
     if (isTop) {
@@ -195,17 +225,22 @@ function BabyContent({
 
   return (
     <Animated.View style={[styles.babyInner, bounceStyle]}>
-      <Image source={{ uri: dataUri(data.photo) }} style={styles.babyPhoto} contentFit="cover" />
+      {/* Baby photo: square, contentFit="cover" — no cropping of the face. */}
+      <Image
+        source={{ uri: dataUri(data.photo) }}
+        style={styles.photoBox}
+        contentFit="cover"
+      />
       <View style={styles.cardInfo}>
         <View style={styles.babyLabelRow}>
-          <Text style={[styles.cardLabel, { color: accent }]}>Bébé</Text>
+          <Text style={[styles.cardLabel, { color: accent }]}>{labelBaby}</Text>
           <View style={[styles.babyGenderChip, { backgroundColor: genderSoft(data.gender) }]}>
             <Text style={[styles.babyGenderText, { color: accent }]}>
-              {data.gender === "boy" ? "Garçon" : "Fille"}
+              {data.gender === "boy" ? labelBoy : labelGirl}
             </Text>
           </View>
         </View>
-        <Text style={styles.cardStats}>Taille adulte potentielle : {data.predictedHeight} cm</Text>
+        <Text style={styles.cardStats}>{labelPredicted}</Text>
       </View>
       <View style={styles.babyButtons}>
         <LiquidGlassButton
@@ -215,17 +250,17 @@ function BabyContent({
           fullWidth
           onPress={onShare}
         >
-          <Ionicons name="share-outline" size={20} color={colors.onBrand} />
-          <Text style={styles.shareButtonText}>Partager</Text>
+          <Icon3D family="ionicons" name="share-outline" size={20} color={colors.onBrand} />
+          <Text style={styles.shareButtonText}>{labelShare}</Text>
         </LiquidGlassButton>
         <LiquidGlassButton
           testID="close-result-button"
           variant="ghost"
-          height={44}
+          height={42}
           fullWidth
           onPress={onClose}
         >
-          <Text style={styles.closeButtonText}>Fermer</Text>
+          <Text style={styles.closeButtonText}>{labelClose}</Text>
         </LiquidGlassButton>
       </View>
       {confettiOn && (
@@ -239,14 +274,20 @@ function BabyContent({
   );
 }
 
-export default function ResultCards({ data, onClose }: { data: CardData; onClose: () => void }) {
+export default function ResultCards({
+  data,
+  onClose,
+}: {
+  data: CardData;
+  onClose: () => void;
+}) {
   const insets = useSafeAreaInsets();
-  const { showToast } = useApp();
+  const { showToast, t } = useApp();
   const [topIndex, setTopIndex] = useState(0);
 
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const message = `Découvre notre futur bébé créé avec BabyFace AI ! Taille adulte potentielle : ${data.baby.predictedHeight} cm`;
+    const message = t("cards_share_msg", { h: data.baby.predictedHeight });
     try {
       if (Platform.OS === "web") {
         await Share.share({ message });
@@ -257,12 +298,15 @@ export default function ResultCards({ data, onClose }: { data: CardData; onClose
         encoding: FileSystem.EncodingType.Base64,
       });
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, { mimeType: "image/png", dialogTitle: "Partager" });
+        await Sharing.shareAsync(fileUri, {
+          mimeType: "image/png",
+          dialogTitle: t("cards_share"),
+        });
       } else {
         await Share.share({ message });
       }
     } catch {
-      showToast("Partage non disponible sur cet appareil");
+      showToast(t("cards_share_err"));
     }
   };
 
@@ -271,11 +315,12 @@ export default function ResultCards({ data, onClose }: { data: CardData; onClose
       type: "father" as const,
       node: (
         <ParentContent
-          label="Papa"
+          label={t("cards_papa")}
           photo={data.father.photo}
           age={data.father.age}
           height={data.father.height}
           accent={colors.blue}
+          statLabel={t("cards_stats", { age: data.father.age, height: data.father.height })}
         />
       ),
     },
@@ -283,25 +328,43 @@ export default function ResultCards({ data, onClose }: { data: CardData; onClose
       type: "mother" as const,
       node: (
         <ParentContent
-          label="Maman"
+          label={t("cards_maman")}
           photo={data.mother.photo}
           age={data.mother.age}
           height={data.mother.height}
           accent={colors.pink}
+          statLabel={t("cards_stats", { age: data.mother.age, height: data.mother.height })}
         />
       ),
     },
     {
       type: "baby" as const,
       node: (
-        <BabyContent data={data.baby} isTop={topIndex === 2} onShare={handleShare} onClose={onClose} />
+        <BabyContent
+          data={data.baby}
+          isTop={topIndex === 2}
+          onShare={handleShare}
+          onClose={onClose}
+          labelBaby={t("cards_baby")}
+          labelBoy={t("gender_boy")}
+          labelGirl={t("gender_girl")}
+          labelShare={t("cards_share")}
+          labelClose={t("common_close")}
+          labelPredicted={t("cards_predicted", { h: data.baby.predictedHeight })}
+        />
       ),
     },
   ];
 
   return (
     <View
-      style={[styles.container, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.lg }]}
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top + spacing.md,
+          paddingBottom: insets.bottom + spacing.lg,
+        },
+      ]}
       testID="result-cards-screen"
     >
       <View style={styles.topBar}>
@@ -316,7 +379,7 @@ export default function ResultCards({ data, onClose }: { data: CardData; onClose
           size={44}
           onPress={onClose}
         >
-          <Ionicons name="close" size={20} color={colors.onSurfaceTertiary} />
+          <Icon3D family="ionicons" name="close" size={20} variant="dark" />
         </LiquidGlassIconButton>
       </View>
 
@@ -345,7 +408,7 @@ export default function ResultCards({ data, onClose }: { data: CardData; onClose
       <View style={styles.hintWrap}>
         {topIndex < 2 ? (
           <Text style={styles.swipeHint} testID="swipe-hint-text">
-            Glisse la carte vers la droite
+            {t("cards_swipe")}
           </Text>
         ) : (
           <View style={styles.hintSpacer} />
@@ -396,9 +459,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     ...shadow.card,
   },
-  parentPhoto: {
-    width: "100%",
-    height: CARD_H - 104,
+  photoBox: {
+    width: PHOTO_SIZE,
+    height: PHOTO_SIZE,
+    backgroundColor: colors.surfaceTertiary,
   },
   cardInfo: {
     paddingHorizontal: spacing.lg,
@@ -414,13 +478,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.onSurfaceTertiary,
   },
-  babyInner: {
-    flex: 1,
-  },
-  babyPhoto: {
-    width: "100%",
-    height: CARD_H - 232,
-  },
+  babyInner: { flex: 1 },
   babyLabelRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -438,7 +496,7 @@ const styles = StyleSheet.create({
   babyButtons: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   shareButtonText: {
     color: colors.onBrand,
@@ -446,7 +504,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   closeButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: colors.onSurfaceTertiary,
   },
@@ -464,7 +522,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.muted,
   },
-  hintSpacer: {
-    height: 18,
-  },
+  hintSpacer: { height: 18 },
 });

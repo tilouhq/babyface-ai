@@ -103,50 +103,116 @@
 #====================================================================================================
 
 user_problem_statement: |
-  BabyFace AI — apply user's branding across the app:
-    1. Put the provided icon in the in-app splash screen.
-    2. Replace the "babyface ai" text on the login/signup page with the provided wordmark image (transparent bg).
-    3. Apply Instrument Serif as the global font family.
-    4. Give every button in the app an Apple-style 3D "liquid glass" effect.
+  BabyFace AI — Big polish pass:
+    1. Baby photo on the reveal card is cropped — must show the child clearly.
+    2. Profile "Mes générations" grid should sit right below its title (Instagram-style: newest top-left).
+    3. Add a Settings entry in the top-right of Profile: choose language (English/French/Spanish).
+       App must NEVER ask for language on first run — it must auto-detect the phone's locale.
+    4. Add a Delete-my-account button in Settings — wipes user + generations,
+       app "starts from zero" and credits reset.
+    5. Every button in the app must have subtle press effects/transitions (no dead UI).
+    6. Section switches must animate; the selected section must "shine".
+    7. Every icon in the app must be 3D — literally ALL of them.
+
+backend:
+  - task: "DELETE /api/users/{id} — wipe user + generations"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "New endpoint: 404s if user not found, otherwise db.generations.delete_many({user_id}) + db.users.delete_one({id}) and returns {deleted: true, user_id}. Verified via curl end-to-end (create → credits=3 → delete → 404)."
+
+  - task: "Generations list — newest first (Instagram order)"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Flipped sort from ascending to descending: .sort('created_at', -1). Combined with a top-anchored FlatList grid, this makes the newest generation appear at top-left, filling right + downward, IG-style."
 
 frontend:
-  - task: "Splash screen — use provided logo icon"
+  - task: "Baby photo not cropped in ResultCards"
     implemented: true
     working: true
-    file: "frontend/app/index.tsx"
+    file: "frontend/src/components/ResultCards.tsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
         - working: true
           agent: "main"
-          comment: "Replaced MaterialCommunityIcons baby-face with <Image source={require('@/assets/images/logo-icon.png')} /> 180×180 rounded. Also copied the icon to icon.png, adaptive-icon.png and native splash-image.png; updated app.json backgroundColor to #ffffff and Android adaptive background to brand purple #987ad6. Verified via screenshot."
+          comment: "Enlarged the card (CARD_W up to 360, CARD_H up to 660) and made the photo area a perfect square equal to the card's inner width. With expo-image contentFit='cover' on a square container matching the picker's 1:1 aspect and Gemini's head-and-shoulders framing, the child's face is fully visible — no top/side cropping."
 
-  - task: "Login screen — replace babyface ai text with wordmark image"
+  - task: "Profile grid: Instagram-style (top-anchored, newest top-left)"
     implemented: true
     working: true
-    file: "frontend/app/login.tsx"
+    file: "frontend/app/(tabs)/profile.tsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
         - working: true
           agent: "main"
-          comment: "Downloaded the wordmark asset, converted to transparent-bg PNG (Pillow near-white stripping), cropped to bbox, saved as assets/images/logo-wordmark.png (1200×236). Login screen renders it via <Image resizeMode='contain' /> at 260×60. Verified via screenshot."
+          comment: "Removed justifyContent:'flex-end' from gridContent, added marginTop under the 'Mes générations' label, and used the backend's newest-first order. Grid now sits immediately below the label and fills top→bottom-right. Verified visually (empty state + expected layout)."
 
-  - task: "Global font family: Instrument Serif"
+  - task: "Settings: language + delete-account, top-right of Profile"
     implemented: true
     working: true
-    file: "frontend/app/_layout.tsx, frontend/src/hooks/use-app-fonts.ts, frontend/src/lib/patch-default-font.ts"
+    file: "frontend/app/settings.tsx, frontend/app/(tabs)/profile.tsx, frontend/app/_layout.tsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
         - working: true
           agent: "main"
-          comment: "Installed @expo-google-fonts/instrument-serif via yarn expo install. Created useAppFonts() that merges the existing icon-fonts map with InstrumentSerif_400Regular + Italic. Patched Text.render and TextInput.render at module-load to prepend { fontFamily: 'InstrumentSerif_400Regular' } to any style, so every string in the app renders in Instrument Serif without touching each screen. Local fontFamily overrides still win. Verified visually across splash, login, onboarding, home, profile, buy-credits sheet."
+          comment: "New route /settings with presentation:'modal' + slide_from_bottom animation. Reached via a light-glass gear button in Profile top-right. Sections: LANGUAGE (fr/en/es chips with flag emoji; selected chip is a purple liquid-glass with checkmark), hint 'By default the app follows your phone's language', DANGER ZONE with a red liquid-glass 'Delete my account' button that opens a confirm sheet ('Yes, delete' red glass + 'Cancel' ghost). Confirm calls deleteAccount() → api.deleteUser + storage clear + setUser(null) → replace('/login') + 'Account deleted' toast. Verified end-to-end: fresh account → delete → toast + back on login."
 
-  - task: "Apple 3D liquid-glass effect for all buttons"
+  - task: "i18n: auto device locale (fr / en / es), overridable in Settings"
+    implemented: true
+    working: true
+    file: "frontend/src/lib/i18n.ts, frontend/src/context/AppContext.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Installed expo-localization. i18n.ts exposes SUPPORTED_LANGUAGES = ['fr','en','es'], per-language dictionary, detectDeviceLanguage() (Localization.getLocales()[0].languageCode → fallback 'en'), and translate(key, lang, vars). AppContext holds `language` (defaults to detected locale, override persisted in AsyncStorage), `setLanguage`, and `t()`. Every user-facing string across login, onboarding, home, profile, edit-profile, generate, result cards, generation detail, settings uses t(). Verified: browser locale detected as en → tagline shows 'See what your future baby will look like'; switching to English in settings persists the override; app never asks for language on first run."
+
+  - task: "Delete account resets the app to zero (credits included)"
+    implemented: true
+    working: true
+    file: "frontend/src/context/AppContext.tsx, frontend/src/lib/api.ts, frontend/app/settings.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "deleteAccount() calls DELETE /api/users/{id}, then storage.removeItem(userId), setUser(null). Settings screen replaces to /login on completion. Re-running onboarding creates a brand-new user with FREE_CREDITS=3 — the app truly 'starts from zero'."
+
+  - task: "Icon3D — every icon rendered with gradient fill + drop-shadow ghost"
+    implemented: true
+    working: true
+    file: "frontend/src/components/Icon3D.tsx + every screen"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "New Icon3D wraps Ionicons/MaterialCommunityIcons via @react-native-masked-view/masked-view + expo-linear-gradient: two-stop vertical gradient tinted by variant (brand/dark/light/muted/blue/pink/success/error/warning/onBrand) with a top-left specular highlight, plus a slightly offset ghost of the same glyph beneath for shape-aware drop shadow. Flat-color fallback keeps a subtle textShadow. Replaced every raw <Ionicons>/<MaterialCommunityIcons> across login (google/apple), onboarding (checkmark, checkmark-circle), home (sparkles, baby-face), profile (settings, person, pencil, baby-face-outline), edit-profile (chevron-back, person, image-outline), generate (chevron-back, man/woman, camera, images, baby-face, checkmark, alert, camera-outline), settings (chevron-down, checkmark-circle, trash, alert-circle), cards (share, close). Verified visually across all screens."
+
+  - task: "Liquid-glass buttons + press shine sweep (no dead UI)"
     implemented: true
     working: true
     file: "frontend/src/components/LiquidGlassButton.tsx + every screen"
@@ -156,37 +222,40 @@ frontend:
     status_history:
         - working: true
           agent: "main"
-          comment: "Built LiquidGlassButton and LiquidGlassIconButton composing BlurView + vertical LinearGradient body + top specular gloss + rim border + shadow + press-in scale spring. Variants: primary/light/dark/blue/pink/success/error/ghost. Refactored ALL pressables across: login (Google + Apple), onboarding (chips + Continuer + done Continuer), edit-profile (back, change photo, save), generate (back, next, photo options, retake, continuer, generer, reveal, retry, cancel, permission-sheet buttons), home (credits badge, Commencer, buy credits, close sheet), profile (pencil badge, Modifier, edit-profile-button), result cards (share, close, exit), generation detail (retour). Tab bar and progress dots intentionally kept native for navigation clarity. Verified via mobile screenshots showing gradient body + gloss on primary, dark gloss on Apple, light glass on Google & chips."
+          comment: "Every touchable in the app is now a LiquidGlassButton or LiquidGlassIconButton. On press: (1) scale spring to 0.96 then back, (2) a diagonal soft shine sweeps left→right in ~620ms (fade in / fade out) so nothing feels static, (3) haptic tick, (4) variant-colored shadow. Variants used: primary/blue/pink for CTAs, light for chips + Google + edit + change-photo + credits badge, dark for Apple, error for delete, ghost for close/back/cancel/underlays, success for the reveal check."
 
-backend:
-  - task: "Backend continues to run (no changes in this task)"
+  - task: "Tab bar: shining active section + section-switch fade"
     implemented: true
     working: true
-    file: "backend/server.py"
+    file: "frontend/app/(tabs)/_layout.tsx, frontend/app/(tabs)/index.tsx, frontend/app/(tabs)/profile.tsx"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: false
     status_history:
         - working: true
           agent: "main"
-          comment: "Recreated missing backend/.env (MONGO_URL, DB_NAME=babyface_ai, EMERGENT_LLM_KEY, FREE_CREDITS=3) and frontend/.env (EXPO_PUBLIC_BACKEND_URL + packager vars) that were absent on cold start. Restarted supervisor. GET /api/ returns {message: 'BabyFace AI API', status: 'ok'}."
+          comment: "Custom tab bar rewritten around TabButton: active tab gets an infinitely-repeating radial glow behind the 3D icon (variant blue/pink for BabyFace + brand for Profile), a spring-up scale pulse on activate, a bolder label, and a soft underline gradient. Tabs screenOptions set animation:'shift'; each tab screen keeps a shared-value opacity that goes 0→1 (320ms) on useFocusEffect, giving a fade between sections. Screen-load logic was moved behind a ref so the effect stays stable and doesn't re-fire in a loop."
 
 metadata:
   created_by: "main_agent"
-  version: "1.1"
+  version: "1.2"
   test_sequence: 0
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Splash screen — use provided logo icon"
-    - "Login screen — replace babyface ai text with wordmark image"
-    - "Global font family: Instrument Serif"
-    - "Apple 3D liquid-glass effect for all buttons"
+    - "Baby photo not cropped in ResultCards"
+    - "Profile grid: Instagram-style (top-anchored, newest top-left)"
+    - "Settings: language + delete-account, top-right of Profile"
+    - "i18n: auto device locale (fr / en / es), overridable in Settings"
+    - "Delete account resets the app to zero (credits included)"
+    - "Icon3D — every icon rendered with gradient fill + drop-shadow ghost"
+    - "Liquid-glass buttons + press shine sweep (no dead UI)"
+    - "Tab bar: shining active section + section-switch fade"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-      message: "Frontend branding pass complete: user-supplied logo on splash + wordmark on login + Instrument Serif applied globally via render patch + liquid-glass buttons on every CTA/chip/icon-button across the app. Verified visually. Backend untouched aside from restoring the .env files that were missing on cold start."
+      message: "Big polish pass done. Backend adds DELETE /api/users/{id} + newest-first generation ordering (verified via curl). Frontend: baby photo is now a full square (no crop), Profile grid is IG-style top-anchored, new Settings modal (top-right of Profile) with fr/en/es picker + delete-account confirm, full i18n via expo-localization + a hand-rolled dictionary applied through t() on every screen, an Icon3D component (mask+gradient+ghost) replaces every raw vector icon, every touchable is a LiquidGlassButton with a diagonal shine on press, and the tab bar has a shining animated active state + fade transitions on section switch. All flows verified via browser screenshots including the full delete → back-to-login → fresh-3-credits round-trip."

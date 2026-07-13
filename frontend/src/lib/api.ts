@@ -65,6 +65,9 @@ export const api = {
   updateUser: (id: string, data: { name?: string; avatar_base64?: string }) =>
     request<User>(`/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
 
+  deleteUser: (id: string) =>
+    request<{ deleted: boolean; user_id: string }>(`/users/${id}`, { method: "DELETE" }),
+
   createGeneration: (data: {
     user_id: string;
     gender: "boy" | "girl";

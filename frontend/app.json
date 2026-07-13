@@ -12,8 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.emergent.babyfaceai.cmgwrb",
       "infoPlist": {
-        "NSCameraUsageDescription": "Prends une photo pour g\u00e9n\u00e9rer votre futur b\u00e9b\u00e9",
-        "NSPhotoLibraryUsageDescription": "Choisis une photo pour g\u00e9n\u00e9rer votre futur b\u00e9b\u00e9"
+        "NSCameraUsageDescription": "Prends une photo pour générer votre futur bébé",
+        "NSPhotoLibraryUsageDescription": "Choisis une photo pour générer votre futur bébé"
       }
     },
     "android": {
@@ -43,7 +43,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

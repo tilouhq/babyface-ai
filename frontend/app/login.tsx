@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -6,16 +5,19 @@ import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon3D } from "@/src/components/Icon3D";
 import { LiquidGlassButton } from "@/src/components/LiquidGlassButton";
+import { useApp } from "@/src/context/AppContext";
 import { colors, spacing } from "@/src/theme";
 
 export default function Login() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useApp();
   const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
 
   const handleLogin = (provider: "google" | "apple") => {
-    // Connexion simulée pour le MVP — remplacer par une vraie auth sociale plus tard.
+    // Simulated auth for the MVP — wire real Google/Apple later.
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoadingProvider(provider);
     setTimeout(() => {
@@ -38,7 +40,7 @@ export default function Login() {
           style={styles.wordmark}
           resizeMode="contain"
         />
-        <Text style={styles.tagline}>Découvrez à quoi ressemblera votre futur bébé</Text>
+        <Text style={styles.tagline}>{t("login_tagline")}</Text>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(150).duration(500)} style={styles.buttons}>
@@ -54,8 +56,8 @@ export default function Login() {
             <ActivityIndicator color={colors.onSurface} />
           ) : (
             <>
-              <Ionicons name="logo-google" size={22} color={colors.onSurface} />
-              <Text style={styles.googleText}>Continuer avec Google</Text>
+              <Icon3D family="ionicons" name="logo-google" size={22} color={colors.onSurface} />
+              <Text style={styles.googleText}>{t("login_google")}</Text>
             </>
           )}
         </LiquidGlassButton>
@@ -72,15 +74,15 @@ export default function Login() {
             <ActivityIndicator color={colors.surface} />
           ) : (
             <>
-              <Ionicons name="logo-apple" size={24} color={colors.surface} />
-              <Text style={styles.appleText}>Continuer avec Apple</Text>
+              <Icon3D family="ionicons" name="logo-apple" size={24} color={colors.surface} />
+              <Text style={styles.appleText}>{t("login_apple")}</Text>
             </>
           )}
         </LiquidGlassButton>
       </Animated.View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>En continuant, tu acceptes nos conditions d’utilisation</Text>
+        <Text style={styles.footerText}>{t("login_terms")}</Text>
       </View>
     </View>
   );

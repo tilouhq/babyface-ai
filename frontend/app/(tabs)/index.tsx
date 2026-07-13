@@ -1,11 +1,17 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeIn, FadeInDown, SlideInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  SlideInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Icon3D } from "@/src/components/Icon3D";
 import { LiquidGlassButton } from "@/src/components/LiquidGlassButton";
 import { useApp } from "@/src/context/AppContext";
 import { colors, genderColor, genderSoft, radius, spacing } from "@/src/theme";
@@ -13,14 +19,24 @@ import { colors, genderColor, genderSoft, radius, spacing } from "@/src/theme";
 export default function BabyFaceHome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, gender, refreshUser, showToast } = useApp();
+  const { user, gender, refreshUser, showToast, t } = useApp();
   const [showBuySheet, setShowBuySheet] = useState(false);
 
+  // Keep the latest refreshUser in a ref so the useFocusEffect callback stays
+  // stable and doesn't re-fire on every render (which would fight the fade).
+  const refreshRef = useRef(refreshUser);
+  refreshRef.current = refreshUser;
+
+  // Fade the whole screen in every time the tab regains focus.
+  const opacity = useSharedValue(1);
   useFocusEffect(
     useCallback(() => {
-      refreshUser();
-    }, [refreshUser]),
+      opacity.value = 0;
+      opacity.value = withTiming(1, { duration: 320 });
+      refreshRef.current();
+    }, [opacity]),
   );
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   const credits = user?.credits ?? 0;
   const gColor = genderColor(gender);
@@ -36,7 +52,9 @@ export default function BabyFaceHome() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
+    <Animated.View
+      style={[styles.container, { paddingTop: insets.top + spacing.md }, fadeStyle]}
+    >
       <View style={styles.header}>
         <Text style={styles.logoText}>babyface ai</Text>
         <LiquidGlassButton
@@ -47,25 +65,33 @@ export default function BabyFaceHome() {
           onPress={() => credits <= 0 && setShowBuySheet(true)}
           contentStyle={styles.creditsContent}
         >
-          <Ionicons name="sparkles" size={16} color={colors.brand} />
+          <Icon3D family="ionicons" name="sparkles" size={16} variant="brand" />
           <Text style={styles.creditsText}>{credits}</Text>
         </LiquidGlassButton>
       </View>
 
       <View style={styles.center}>
-        <Animated.View entering={FadeIn.duration(500)} style={[styles.babyCircle, { backgroundColor: gSoft }]}>
-          <MaterialCommunityIcons name="baby-face" size={88} color={gColor} />
+        <Animated.View
+          entering={FadeInDown.duration(500)}
+          style={[styles.babyCircle, { backgroundColor: gSoft }]}
+        >
+          <Icon3D
+            family="material-community"
+            name="baby-face"
+            size={96}
+            variant={gender === "boy" ? "blue" : "pink"}
+          />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.textBlock}>
-          <Text style={styles.title}>Découvrez votre futur bébé</Text>
+          <Text style={styles.title}>{t("home_title")}</Text>
           <View style={[styles.genderChip, { backgroundColor: gSoft }]} testID="gender-indicator">
             <View style={[styles.genderDot, { backgroundColor: gColor }]} />
             <Text style={[styles.genderChipText, { color: gColor }]}>
-              {gender === "boy" ? "Garçon" : "Fille"}
+              {gender === "boy" ? t("gender_boy") : t("gender_girl")}
             </Text>
           </View>
-          <Text style={styles.hint}>Touche à nouveau l’onglet BabyFace AI pour changer le genre</Text>
+          <Text style={styles.hint}>{t("home_hint")}</Text>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(500)} style={styles.startWrap}>
@@ -76,33 +102,39 @@ export default function BabyFaceHome() {
             width={280}
             onPress={onStart}
           >
-            <Text style={styles.startButtonText}>Commencer</Text>
+            <Text style={styles.startButtonText}>{t("home_start")}</Text>
           </LiquidGlassButton>
         </Animated.View>
       </View>
 
-      <Modal visible={showBuySheet} transparent animationType="fade" onRequestClose={() => setShowBuySheet(false)}>
+      <Modal
+        visible={showBuySheet}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBuySheet(false)}
+      >
         <Pressable style={styles.sheetBackdrop} onPress={() => setShowBuySheet(false)}>
-          <Animated.View entering={SlideInDown.duration(300)} style={[styles.sheet, { paddingBottom: insets.bottom + spacing.xl }]}>
+          <Animated.View
+            entering={SlideInDown.duration(300)}
+            style={[styles.sheet, { paddingBottom: insets.bottom + spacing.xl }]}
+          >
             <Pressable onPress={() => {}} style={styles.sheetInner}>
               <View style={styles.sheetHandle} />
               <View style={styles.sheetIconCircle}>
-                <Ionicons name="sparkles" size={32} color={colors.brand} />
+                <Icon3D family="ionicons" name="sparkles" size={34} variant="brand" />
               </View>
-              <Text style={styles.sheetTitle}>Plus de crédits</Text>
-              <Text style={styles.sheetText}>
-                Tu as utilisé tous tes crédits gratuits. Achète-en d’autres pour continuer à générer des bébés.
-              </Text>
+              <Text style={styles.sheetTitle}>{t("home_buy_title")}</Text>
+              <Text style={styles.sheetText}>{t("home_buy_text")}</Text>
               <LiquidGlassButton
                 testID="buy-credits-button"
                 variant="primary"
                 fullWidth
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  showToast("Les achats de crédits arrivent bientôt");
+                  showToast(t("home_buy_toast"));
                 }}
               >
-                <Text style={styles.buyButtonText}>Acheter des crédits</Text>
+                <Text style={styles.buyButtonText}>{t("home_buy_cta")}</Text>
               </LiquidGlassButton>
               <LiquidGlassButton
                 testID="close-buy-sheet-button"
@@ -111,13 +143,13 @@ export default function BabyFaceHome() {
                 height={48}
                 onPress={() => setShowBuySheet(false)}
               >
-                <Text style={styles.closeSheetText}>Fermer</Text>
+                <Text style={styles.closeSheetText}>{t("common_close")}</Text>
               </LiquidGlassButton>
             </Pressable>
           </Animated.View>
         </Pressable>
       </Modal>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -156,9 +188,9 @@ const styles = StyleSheet.create({
     gap: spacing.xxl,
   },
   babyCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 168,
+    height: 168,
+    borderRadius: 84,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -181,11 +213,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     height: 36,
   },
-  genderDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
+  genderDot: { width: 10, height: 10, borderRadius: 5 },
   genderChipText: {
     fontSize: 15,
     fontWeight: "700",
@@ -229,13 +257,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sheetIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: colors.brandSoft,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   sheetTitle: {
     fontSize: 24,

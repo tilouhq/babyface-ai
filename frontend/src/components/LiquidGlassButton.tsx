@@ -1,11 +1,6 @@
 // LiquidGlassButton — Apple-inspired "liquid glass" surface for every touchable
-// in the app. Composed layers:
-//   1. BlurView                — frosts anything showing through
-//   2. Vertical color gradient — the glass body / tint
-//   3. Top specular highlight  — glossy sheen (upper 55%)
-//   4. Rim border              — thin translucent edge
-//   5. Content                 — children (Text + icons)
-// Wrapped in an Animated.View that shrinks slightly on press ("squish").
+// in the app. On press it also runs a diagonal "shine" sweep so nothing feels
+// static: gloss travels left-to-right + slight scale spring.
 
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
@@ -19,9 +14,11 @@ import {
   ViewStyle,
 } from "react-native";
 import Animated, {
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 import { radius } from "@/src/theme";
@@ -46,6 +43,7 @@ interface Tokens {
   shadowColor: string;
   shadowOpacity: number;
   gloss: readonly [string, string];
+  shineColor: string;
 }
 
 const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
@@ -59,6 +57,7 @@ const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
     shadowColor: "#987ad6",
     shadowOpacity: 0.35,
     gloss: ["rgba(255,255,255,0.55)", "rgba(255,255,255,0)"],
+    shineColor: "rgba(255,255,255,0.55)",
   },
   light: {
     tintTop: "rgba(255,255,255,0.92)",
@@ -70,6 +69,7 @@ const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
     shadowColor: "#0f172a",
     shadowOpacity: 0.10,
     gloss: ["rgba(255,255,255,0.75)", "rgba(255,255,255,0)"],
+    shineColor: "rgba(152,122,214,0.30)",
   },
   dark: {
     tintTop: "rgba(30, 41, 59, 0.90)",
@@ -81,6 +81,7 @@ const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
     shadowColor: "#0f172a",
     shadowOpacity: 0.40,
     gloss: ["rgba(255,255,255,0.28)", "rgba(255,255,255,0)"],
+    shineColor: "rgba(255,255,255,0.45)",
   },
   blue: {
     tintTop: "rgba(96, 165, 250, 0.95)",
@@ -92,6 +93,7 @@ const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
     shadowColor: "#3b82f6",
     shadowOpacity: 0.35,
     gloss: ["rgba(255,255,255,0.55)", "rgba(255,255,255,0)"],
+    shineColor: "rgba(255,255,255,0.55)",
   },
   pink: {
     tintTop: "rgba(251, 146, 200, 0.95)",
@@ -103,6 +105,7 @@ const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
     shadowColor: "#f472b6",
     shadowOpacity: 0.35,
     gloss: ["rgba(255,255,255,0.55)", "rgba(255,255,255,0)"],
+    shineColor: "rgba(255,255,255,0.55)",
   },
   success: {
     tintTop: "rgba(74, 222, 128, 0.95)",
@@ -114,6 +117,7 @@ const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
     shadowColor: "#22c55e",
     shadowOpacity: 0.35,
     gloss: ["rgba(255,255,255,0.55)", "rgba(255,255,255,0)"],
+    shineColor: "rgba(255,255,255,0.55)",
   },
   error: {
     tintTop: "rgba(252, 165, 165, 0.95)",
@@ -125,6 +129,7 @@ const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
     shadowColor: "#ef4444",
     shadowOpacity: 0.35,
     gloss: ["rgba(255,255,255,0.55)", "rgba(255,255,255,0)"],
+    shineColor: "rgba(255,255,255,0.55)",
   },
   ghost: {
     tintTop: "rgba(255,255,255,0.68)",
@@ -136,6 +141,7 @@ const VARIANTS: Record<LiquidGlassVariant, Tokens> = {
     shadowColor: "#0f172a",
     shadowOpacity: 0.05,
     gloss: ["rgba(255,255,255,0.6)", "rgba(255,255,255,0)"],
+    shineColor: "rgba(152,122,214,0.25)",
   },
 };
 
@@ -171,11 +177,19 @@ export function LiquidGlassButton({
   borderRadius,
 }: LiquidGlassButtonProps) {
   const scale = useSharedValue(1);
+  const shine = useSharedValue(0); // 0..1, drives the diagonal light sweep
   const v = VARIANTS[variant];
   const br = borderRadius ?? radius.pill;
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+  }));
+
+  const shineStyle = useAnimatedStyle(() => ({
+    // Slide a soft light rectangle from the left edge to the right edge
+    // while fading in then out. -100% -> 100% of width, opacity 0 -> 1 -> 0.
+    transform: [{ translateX: interpolate(shine.value, [0, 1], [-160, 340]) }],
+    opacity: interpolate(shine.value, [0, 0.15, 0.85, 1], [0, 1, 1, 0]),
   }));
 
   const handlePress = () => {
@@ -209,6 +223,8 @@ export function LiquidGlassButton({
         disabled={disabled}
         onPressIn={() => {
           scale.value = withSpring(0.96, { damping: 20, stiffness: 320 });
+          shine.value = 0;
+          shine.value = withTiming(1, { duration: 620 });
         }}
         onPressOut={() => {
           scale.value = withSpring(1, { damping: 15, stiffness: 240 });
@@ -238,6 +254,17 @@ export function LiquidGlassButton({
             },
           ]}
         />
+        {/* Diagonal shine sweep on press */}
+        <Animated.View pointerEvents="none" style={[styles.shineHost, { borderRadius: br }]}>
+          <Animated.View style={[styles.shineBar, shineStyle]}>
+            <LinearGradient
+              colors={["transparent", v.shineColor, "transparent"]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.shineGradient}
+            />
+          </Animated.View>
+        </Animated.View>
         <View
           pointerEvents="none"
           style={[styles.rim, { borderRadius: br, borderColor: v.border }]}
@@ -289,6 +316,21 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+  },
+  shineHost: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  shineBar: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 160,
+  },
+  shineGradient: {
+    flex: 1,
+    transform: [{ skewX: "-20deg" }],
   },
   rim: {
     ...StyleSheet.absoluteFillObject,

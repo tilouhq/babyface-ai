@@ -1,4 +1,3 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
@@ -21,11 +20,12 @@ import {
 import Animated, { FadeIn, FadeOut, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import ResultCards from "@/src/components/ResultCards";
+import { Icon3D } from "@/src/components/Icon3D";
 import {
   LiquidGlassButton,
   LiquidGlassIconButton,
 } from "@/src/components/LiquidGlassButton";
+import ResultCards from "@/src/components/ResultCards";
 import { useApp } from "@/src/context/AppContext";
 import { api, ApiError, Generation, dataUri } from "@/src/lib/api";
 import { colors, radius, spacing } from "@/src/theme";
@@ -40,17 +40,10 @@ type Step =
   | "cards"
   | "error";
 
-const LOADING_MESSAGES = [
-  "Analyse des visages...",
-  "Fusion des traits...",
-  "Création de votre bébé...",
-  "Derniers détails...",
-];
-
 export default function Generate() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, gender, refreshUser, showToast } = useApp();
+  const { user, gender, refreshUser, showToast, t } = useApp();
 
   const [step, setStep] = useState<Step>("man-info");
   const [manAge, setManAge] = useState("");
@@ -64,6 +57,13 @@ export default function Generate() {
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [showPermissionSheet, setShowPermissionSheet] = useState(false);
 
+  const LOADING_MESSAGES = [
+    t("gen_loading_1"),
+    t("gen_loading_2"),
+    t("gen_loading_3"),
+    t("gen_loading_4"),
+  ];
+
   // Genre capturé à l'entrée dans la section (état de l'onglet au moment d'entrer)
   const genderRef = useRef(gender);
   const startedRef = useRef(false);
@@ -75,7 +75,7 @@ export default function Generate() {
   useEffect(() => {
     if (step !== "generating") return;
     const interval = setInterval(() => {
-      setLoadingMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length);
+      setLoadingMsgIndex((i) => (i + 1) % 4);
     }, 2500);
     return () => clearInterval(interval);
   }, [step]);
@@ -101,7 +101,7 @@ export default function Generate() {
       } catch (e) {
         startedRef.current = false;
         if (e instanceof ApiError && e.status === 402) {
-          showToast("Tu n'as plus de crédits");
+          showToast(t("gen_no_credits"));
           router.back();
         } else {
           setStep("error");
@@ -115,11 +115,11 @@ export default function Generate() {
     const age = parseInt(isMan ? manAge : womanAge, 10);
     const height = parseInt(isMan ? manHeight : womanHeight, 10);
     if (!age || age < 16 || age > 90) {
-      setError("Entre un âge valide (16 à 90 ans)");
+      setError(t("gen_err_age"));
       return false;
     }
     if (!height || height < 120 || height > 230) {
-      setError("Entre une taille valide (120 à 230 cm)");
+      setError(t("gen_err_height"));
       return false;
     }
     return true;
@@ -178,7 +178,7 @@ export default function Generate() {
         setCurrentPhoto(res.assets[0].base64);
       }
     } catch {
-      showToast("Impossible d'ouvrir la caméra");
+      showToast(t("gen_camera_err"));
     }
   };
 
@@ -190,7 +190,7 @@ export default function Generate() {
         setCurrentPhoto(res.assets[0].base64);
       }
     } catch {
-      showToast("Impossible d'ouvrir la galerie");
+      showToast(t("gen_gallery_err"));
     }
   };
 
@@ -200,7 +200,7 @@ export default function Generate() {
   const accent = isMan ? colors.blue : colors.pink;
   const primaryVariant: "blue" | "pink" = isMan ? "blue" : "pink";
 
-  // ------- Écrans plein écran (generating / reveal / cards / error) -------
+  // ------- Full-screen states -------
 
   if (step === "generating") {
     return (
@@ -211,10 +211,14 @@ export default function Generate() {
         testID="generation-loading-screen"
       >
         <View style={[styles.loadingCircle, { backgroundColor: colors.brandSoft }]}>
-          <MaterialCommunityIcons name="baby-face" size={64} color={colors.brand} />
+          <Icon3D family="material-community" name="baby-face" size={72} variant="brand" />
         </View>
-        <Text style={styles.loadingTitle}>Génération en cours</Text>
-        <Animated.Text key={loadingMsgIndex} entering={FadeIn.duration(400)} style={styles.loadingMsg}>
+        <Text style={styles.loadingTitle}>{t("gen_loading_title")}</Text>
+        <Animated.Text
+          key={loadingMsgIndex}
+          entering={FadeIn.duration(400)}
+          style={styles.loadingMsg}
+        >
           {LOADING_MESSAGES[loadingMsgIndex]}
         </Animated.Text>
         <ActivityIndicator size="large" color={colors.brand} style={styles.loadingSpinner} />
@@ -231,7 +235,7 @@ export default function Generate() {
         testID="reveal-screen"
       >
         <Animated.View entering={ZoomIn.delay(150).springify()} style={styles.revealCheck}>
-          <Ionicons name="checkmark" size={52} color={colors.surface} />
+          <Icon3D family="ionicons" name="checkmark" size={56} color={colors.surface} />
         </Animated.View>
         <LiquidGlassButton
           testID="reveal-results-button"
@@ -243,7 +247,7 @@ export default function Generate() {
             setStep("cards");
           }}
         >
-          <Text style={styles.revealButtonText}>Révéler les résultats</Text>
+          <Text style={styles.revealButtonText}>{t("gen_reveal_cta")}</Text>
         </LiquidGlassButton>
       </Animated.View>
     );
@@ -280,10 +284,10 @@ export default function Generate() {
     return (
       <View style={styles.fullCenter} testID="generation-error-screen">
         <View style={styles.errorCircle}>
-          <Ionicons name="alert" size={44} color={colors.error} />
+          <Icon3D family="ionicons" name="alert" size={44} variant="error" />
         </View>
-        <Text style={styles.loadingTitle}>Oups, la génération a échoué</Text>
-        <Text style={styles.loadingMsg}>Réessaie dans quelques instants</Text>
+        <Text style={styles.loadingTitle}>{t("gen_err_title")}</Text>
+        <Text style={styles.loadingMsg}>{t("gen_err_sub")}</Text>
         <LiquidGlassButton
           testID="retry-generation-button"
           variant="primary"
@@ -291,7 +295,7 @@ export default function Generate() {
           style={styles.revealButtonWrap}
           onPress={() => setStep("generating")}
         >
-          <Text style={styles.revealButtonText}>Réessayer</Text>
+          <Text style={styles.revealButtonText}>{t("common_retry")}</Text>
         </LiquidGlassButton>
         <LiquidGlassButton
           testID="cancel-generation-button"
@@ -299,13 +303,13 @@ export default function Generate() {
           height={48}
           onPress={() => router.back()}
         >
-          <Text style={styles.ghostButtonText}>Fermer</Text>
+          <Text style={styles.ghostButtonText}>{t("common_close")}</Text>
         </LiquidGlassButton>
       </View>
     );
   }
 
-  // ------- Étapes du formulaire -------
+  // ------- Form steps -------
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
@@ -317,11 +321,14 @@ export default function Generate() {
             variant="ghost"
             size={44}
           >
-            <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
+            <Icon3D family="ionicons" name="chevron-back" size={22} variant="dark" />
           </LiquidGlassIconButton>
           <View style={styles.progressRow}>
             {[0, 1, 2, 3].map((i) => (
-              <View key={i} style={[styles.progressDot, i <= stepIndex && { backgroundColor: accent }]} />
+              <View
+                key={i}
+                style={[styles.progressDot, i <= stepIndex && { backgroundColor: accent }]}
+              />
             ))}
           </View>
           <View style={styles.headerSpacer} />
@@ -337,33 +344,51 @@ export default function Generate() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Animated.View key={step} entering={FadeIn.duration(350)} exiting={FadeOut.duration(150)}>
-              <View style={[styles.personBadge, { backgroundColor: isMan ? colors.blueSoft : colors.pinkSoft }]}>
-                <Ionicons name={isMan ? "man" : "woman"} size={30} color={accent} />
+            <Animated.View
+              key={step}
+              entering={FadeIn.duration(350)}
+              exiting={FadeOut.duration(150)}
+            >
+              <View
+                style={[
+                  styles.personBadge,
+                  { backgroundColor: isMan ? colors.blueSoft : colors.pinkSoft },
+                ]}
+              >
+                <Icon3D
+                  family="ionicons"
+                  name={isMan ? "man" : "woman"}
+                  size={34}
+                  variant={isMan ? "blue" : "pink"}
+                />
               </View>
-              <Text style={styles.title}>{isMan ? "L'homme" : "La femme"}</Text>
-              <Text style={styles.subtitle}>Renseigne son âge et sa taille</Text>
+              <Text style={styles.title}>{isMan ? t("gen_man") : t("gen_woman")}</Text>
+              <Text style={styles.subtitle}>{t("gen_info_sub")}</Text>
 
-              <Text style={styles.inputLabel}>Âge</Text>
+              <Text style={styles.inputLabel}>{t("gen_age")}</Text>
               <TextInput
                 testID={isMan ? "man-age-input" : "woman-age-input"}
                 style={styles.input}
-                placeholder="Ex : 28"
+                placeholder={t("gen_age_placeholder")}
                 placeholderTextColor={colors.muted}
                 value={isMan ? manAge : womanAge}
-                onChangeText={(t) => (isMan ? setManAge : setWomanAge)(t.replace(/[^0-9]/g, ""))}
+                onChangeText={(txt) =>
+                  (isMan ? setManAge : setWomanAge)(txt.replace(/[^0-9]/g, ""))
+                }
                 keyboardType="number-pad"
                 maxLength={2}
               />
 
-              <Text style={styles.inputLabel}>Taille (cm)</Text>
+              <Text style={styles.inputLabel}>{t("gen_height")}</Text>
               <TextInput
                 testID={isMan ? "man-height-input" : "woman-height-input"}
                 style={styles.input}
-                placeholder="Ex : 180"
+                placeholder={t("gen_height_placeholder")}
                 placeholderTextColor={colors.muted}
                 value={isMan ? manHeight : womanHeight}
-                onChangeText={(t) => (isMan ? setManHeight : setWomanHeight)(t.replace(/[^0-9]/g, ""))}
+                onChangeText={(txt) =>
+                  (isMan ? setManHeight : setWomanHeight)(txt.replace(/[^0-9]/g, ""))
+                }
                 keyboardType="number-pad"
                 maxLength={3}
               />
@@ -384,7 +409,7 @@ export default function Generate() {
                 fullWidth
                 onPress={goNextFromInfo}
               >
-                <Text style={styles.primaryButtonText}>Continuer</Text>
+                <Text style={styles.primaryButtonText}>{t("common_continue")}</Text>
               </LiquidGlassButton>
             </View>
           </KeyboardStickyView>
@@ -398,19 +423,25 @@ export default function Generate() {
           exiting={FadeOut.duration(150)}
           style={[styles.flex, styles.photoStep, { paddingBottom: insets.bottom + spacing.lg }]}
         >
-          <Text style={styles.title}>{isMan ? "Photo de l'homme" : "Photo de la femme"}</Text>
-          <Text style={styles.subtitle}>Un visage bien visible, de face</Text>
+          <Text style={styles.title}>
+            {isMan ? t("gen_photo_man") : t("gen_photo_woman")}
+          </Text>
+          <Text style={styles.subtitle}>{t("gen_photo_sub")}</Text>
 
           {currentPhoto ? (
             <View style={styles.previewWrap}>
-              <Image source={{ uri: dataUri(currentPhoto) }} style={styles.preview} contentFit="cover" />
+              <Image
+                source={{ uri: dataUri(currentPhoto) }}
+                style={styles.preview}
+                contentFit="cover"
+              />
               <LiquidGlassButton
                 testID="retake-photo-button"
                 variant="ghost"
                 height={48}
                 onPress={() => setCurrentPhoto(null)}
               >
-                <Text style={styles.ghostButtonText}>Reprendre</Text>
+                <Text style={styles.ghostButtonText}>{t("gen_retake")}</Text>
               </LiquidGlassButton>
             </View>
           ) : (
@@ -418,30 +449,40 @@ export default function Generate() {
               <LiquidGlassButton
                 testID="take-photo-button"
                 variant="light"
-                height={78}
+                height={80}
                 fullWidth
                 borderRadius={radius.md}
                 onPress={takePhoto}
                 contentStyle={styles.photoOptionContent}
               >
-                <View style={[styles.photoOptionIcon, { backgroundColor: isMan ? colors.blueSoft : colors.pinkSoft }]}>
-                  <Ionicons name="camera" size={28} color={accent} />
+                <View
+                  style={[
+                    styles.photoOptionIcon,
+                    { backgroundColor: isMan ? colors.blueSoft : colors.pinkSoft },
+                  ]}
+                >
+                  <Icon3D
+                    family="ionicons"
+                    name="camera"
+                    size={30}
+                    variant={isMan ? "blue" : "pink"}
+                  />
                 </View>
-                <Text style={styles.photoOptionText}>Prendre une photo</Text>
+                <Text style={styles.photoOptionText}>{t("gen_take_photo")}</Text>
               </LiquidGlassButton>
               <LiquidGlassButton
                 testID="upload-photo-button"
                 variant="light"
-                height={78}
+                height={80}
                 fullWidth
                 borderRadius={radius.md}
                 onPress={uploadPhoto}
                 contentStyle={styles.photoOptionContent}
               >
                 <View style={[styles.photoOptionIcon, { backgroundColor: colors.brandSoft }]}>
-                  <Ionicons name="images" size={28} color={colors.brand} />
+                  <Icon3D family="ionicons" name="images" size={30} variant="brand" />
                 </View>
-                <Text style={styles.photoOptionText}>Importer une photo</Text>
+                <Text style={styles.photoOptionText}>{t("gen_upload_photo")}</Text>
               </LiquidGlassButton>
             </View>
           )}
@@ -457,7 +498,7 @@ export default function Generate() {
               style={{ marginHorizontal: spacing.xl }}
             >
               <Text style={styles.primaryButtonText}>
-                {isMan ? "Continuer" : "Générer le bébé"}
+                {isMan ? t("common_continue") : t("gen_generate_baby")}
               </Text>
             </LiquidGlassButton>
           )}
@@ -470,15 +511,15 @@ export default function Generate() {
         animationType="fade"
         onRequestClose={() => setShowPermissionSheet(false)}
       >
-        <Pressable style={styles.sheetBackdrop} onPress={() => setShowPermissionSheet(false)}>
+        <Pressable
+          style={styles.sheetBackdrop}
+          onPress={() => setShowPermissionSheet(false)}
+        >
           <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.xl }]}>
             <View style={styles.sheetHandle} />
-            <Ionicons name="camera-outline" size={40} color={colors.brand} />
-            <Text style={styles.sheetTitle}>Accès à la caméra</Text>
-            <Text style={styles.sheetText}>
-              L’accès à la caméra a été refusé. Autorise-le dans les réglages pour prendre une photo,
-              ou importe une photo depuis ta galerie.
-            </Text>
+            <Icon3D family="ionicons" name="camera-outline" size={44} variant="brand" />
+            <Text style={styles.sheetTitle}>{t("gen_perm_title")}</Text>
+            <Text style={styles.sheetText}>{t("gen_perm_text")}</Text>
             <LiquidGlassButton
               testID="open-settings-button"
               variant="primary"
@@ -488,7 +529,7 @@ export default function Generate() {
                 Linking.openSettings();
               }}
             >
-              <Text style={styles.primaryButtonText}>Ouvrir les réglages</Text>
+              <Text style={styles.primaryButtonText}>{t("gen_perm_open")}</Text>
             </LiquidGlassButton>
             <LiquidGlassButton
               testID="permission-cancel-button"
@@ -496,7 +537,7 @@ export default function Generate() {
               height={48}
               onPress={() => setShowPermissionSheet(false)}
             >
-              <Text style={styles.ghostButtonText}>Annuler</Text>
+              <Text style={styles.ghostButtonText}>{t("common_cancel")}</Text>
             </LiquidGlassButton>
           </View>
         </Pressable>
@@ -506,26 +547,16 @@ export default function Generate() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  flex: {
-    flex: 1,
-  },
-  flexSpacer: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: colors.surface },
+  flex: { flex: 1 },
+  flexSpacer: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.md,
   },
-  headerSpacer: {
-    width: 44,
-    height: 44,
-  },
+  headerSpacer: { width: 44, height: 44 },
   progressRow: {
     flexDirection: "row",
     gap: spacing.sm,
@@ -542,9 +573,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   personBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.lg,
@@ -554,7 +585,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: -0.5,
-    paddingHorizontal: 0,
   },
   subtitle: {
     fontSize: 17,
@@ -598,9 +628,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
   },
-  photoOptions: {
-    gap: spacing.lg,
-  },
+  photoOptions: { gap: spacing.lg },
   photoOptionContent: {
     flexDirection: "row",
     justifyContent: "flex-start",
@@ -608,9 +636,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   photoOptionIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -642,9 +670,9 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   loadingCircle: {
-    width: 128,
-    height: 128,
-    borderRadius: 64,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -659,13 +687,11 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceTertiary,
     textAlign: "center",
   },
-  loadingSpinner: {
-    marginTop: spacing.md,
-  },
+  loadingSpinner: { marginTop: spacing.md },
   revealCheck: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     backgroundColor: colors.success,
     alignItems: "center",
     justifyContent: "center",
@@ -676,18 +702,16 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 6,
   },
-  revealButtonWrap: {
-    minWidth: 260,
-  },
+  revealButtonWrap: { minWidth: 260 },
   revealButtonText: {
     color: colors.onBrand,
     fontSize: 18,
     fontWeight: "700",
   },
   errorCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     backgroundColor: "#fdeceb",
     alignItems: "center",
     justifyContent: "center",

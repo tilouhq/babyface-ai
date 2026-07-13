@@ -4,12 +4,14 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { LiquidGlassButton } from "@/src/components/LiquidGlassButton";
 import ResultCards from "@/src/components/ResultCards";
+import { useApp } from "@/src/context/AppContext";
 import { api, Generation } from "@/src/lib/api";
 import { colors, spacing } from "@/src/theme";
 
 export default function GenerationDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useApp();
   const [gen, setGen] = useState<Generation | null>(null);
   const [error, setError] = useState(false);
 
@@ -24,14 +26,14 @@ export default function GenerationDetail() {
   if (error) {
     return (
       <View style={styles.center} testID="generation-detail-error">
-        <Text style={styles.errorText}>Impossible de charger cette génération</Text>
+        <Text style={styles.errorText}>{t("detail_err")}</Text>
         <LiquidGlassButton
           testID="detail-back-button"
           variant="primary"
           height={50}
           onPress={() => router.back()}
         >
-          <Text style={styles.backButtonText}>Retour</Text>
+          <Text style={styles.backButtonText}>{t("common_back")}</Text>
         </LiquidGlassButton>
       </View>
     );
